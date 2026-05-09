@@ -11,7 +11,8 @@ public class PaisServiceImpl extends BaseServiceImpl<Pais,String> implements Pai
 
     private final PaisRepository paisRepository;
 
-    public PaisServiceImpl(BaseRepository<Pais, String> baserepository, PaisRepository paisRepository) {super(baserepository);
+    public PaisServiceImpl(BaseRepository<Pais, String> baserepository, PaisRepository paisRepository) {
+        super(baserepository);
         this.paisRepository = paisRepository;
     }
 
@@ -38,6 +39,7 @@ public class PaisServiceImpl extends BaseServiceImpl<Pais,String> implements Pai
         } catch (ErrorServiceException ex) {
             throw ex;
         } catch (Exception ex) {
+            ex.printStackTrace();
             throw new ErrorServiceException("Error de sistemas");
         }
     }

@@ -56,6 +56,7 @@ public abstract class BaseControllerImpl<E extends Base, S extends BaseServiceIm
         } catch (ErrorServiceException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"error\":\""+ex.getMessage()+"\"}");
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"error\":\"Error. Por favor intente más tarde.\"}");
         }
     }
