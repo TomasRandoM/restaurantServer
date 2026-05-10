@@ -5,7 +5,9 @@ import com.apkrew.staffManagementServer.domain.entity.Provincia;
 import com.apkrew.staffManagementServer.domain.repository.BaseRepository;
 import com.apkrew.staffManagementServer.domain.repository.ProvinciaRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ProvinciaServiceImpl extends BaseServiceImpl<Provincia, String> implements ProvinciaService {
 
     private final ProvinciaRepository provinciaRepository;

@@ -8,7 +8,9 @@ import com.apkrew.staffManagementServer.domain.repository.UsuarioRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
 
+@Service
 public class UsuarioServiceImpl extends BaseServiceImpl<Usuario,String> implements UsuarioService{
 
     private final UsuarioRepository usuarioRepository;
@@ -29,12 +31,16 @@ public class UsuarioServiceImpl extends BaseServiceImpl<Usuario,String> implemen
     }
 
     @Override
-    @Transactional
     public Usuario changePassword(Usuario entity) throws Exception {
         validar(entity, "UPDATE");
         entity.setPassword(new BCryptPasswordEncoder().encode(entity.getPassword()));
         Usuario usuario = super.save(entity);
         usuario.setPassword("****");
+        return usuario;
+    }
+
+    public Usuario searchByEmail(String email) throws Exception {
+        Usuario usuario = usuarioRepository.findByEmailAndEliminadoFalse(email);
         return usuario;
     }
 
