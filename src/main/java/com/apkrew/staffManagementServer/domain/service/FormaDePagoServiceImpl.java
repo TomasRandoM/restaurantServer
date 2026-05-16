@@ -4,7 +4,9 @@ import com.apkrew.staffManagementServer.domain.entity.FormaDePago;
 import com.apkrew.staffManagementServer.domain.repository.BaseRepository;
 import com.apkrew.staffManagementServer.domain.repository.FormaDePagoRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
+import org.springframework.stereotype.Service;
 
+@Service
 public class FormaDePagoServiceImpl extends BaseServiceImpl<FormaDePago,String> implements FormaDePagoService{
 
     private final FormaDePagoRepository formaDePagoRepository;
@@ -26,9 +28,21 @@ public class FormaDePagoServiceImpl extends BaseServiceImpl<FormaDePago,String> 
                 throw new ErrorServiceException("Debe indicar el método de pago");
             }
 
-            if (entity.getObservacion() != null &&
-                    entity.getObservacion().length() > 255) {
-                throw new ErrorServiceException("La observación no puede superar los 255 caracteres");
+            if (entity.getObservacion() != null) {
+
+                entity.setObservacion(entity.getObservacion().trim());
+
+                if (entity.getObservacion().isEmpty()) {
+                    entity.setObservacion(null);
+                }
+
+                if (entity.getObservacion() != null &&
+                        entity.getObservacion().length() > 255) {
+
+                    throw new ErrorServiceException(
+                            "La observación no puede superar los 255 caracteres"
+                    );
+                }
             }
 
             if (caso.equals("SAVE")) {
