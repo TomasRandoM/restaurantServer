@@ -5,5 +5,6 @@ public enum MetodoPago {
     TARJETA_DE_DEBITO,
     TARJETA_DE_CREDITO,
     QR,
-    TRANSFERENCIA
+    TRANSFERENCIA,
+    BILLETERA_VIRTUAL
 }
