@@ -1,6 +1,6 @@
 package com.apkrew.staffManagementServer.domain.entity;
 
-import com.apkrew.staffManagementServer.domain.enums.TipoEmpleado;
+import com.apkrew.staffManagementServer.domain.enums.TipoContacto;
 import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -10,8 +10,9 @@ import org.hibernate.envers.Audited;
 @Entity
 @NoArgsConstructor
 @Data
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper=false)
 @Audited
-public class Empleado extends Persona {
-    private TipoEmpleado tipoEmpleado;
+public abstract class Contacto extends Base {
+    private String observacion;
+    private TipoContacto tipoContacto;
 }

@@ -24,4 +24,8 @@ public class Persona extends Base{
     private Date fechaNacimiento;
     @ManyToOne
     private Usuario usuario;
+    @ManyToOne
+    private Direccion direccion;
+    @ManyToOne
+    private Contacto contacto;
 }
