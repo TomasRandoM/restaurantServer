@@ -27,6 +27,10 @@ public class LocalidadServiceImpl extends  BaseServiceImpl<Localidad,String> imp
                 throw new ErrorServiceException("Debe indicar el departamento");
             }
 
+            if (entity.getCodigoPostal() == null || entity.getCodigoPostal().isEmpty()) {
+                throw new ErrorServiceException("Debe indicar el código postal");
+            }
+
             if (caso.equals("SAVE")) {
                 if (localidadRepository.existsByNombreAndDepartamentoIdAndEliminadoFalse(entity.getNombre(), entity.getDepartamento().getId())) {
                     throw new ErrorServiceException("La localidad ingresada ya existe para ese departamento");

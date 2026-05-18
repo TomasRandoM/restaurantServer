@@ -1,8 +1,6 @@
 package com.apkrew.staffManagementServer.domain.entity;
 
-import com.apkrew.staffManagementServer.domain.enums.RolUsuario;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -10,7 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.envers.Audited;
 
 /**
- * Entidad de usuario
+ * Entidad de domicilio
  * @version 1.0.0
  */
 @Entity
@@ -18,12 +16,13 @@ import org.hibernate.envers.Audited;
 @Data
 @EqualsAndHashCode(callSuper=false)
 @Audited
-public class Usuario extends Base {
-
-    private String email;
-    private String password;
-    private RolUsuario rol;
+public class Direccion extends Base {
+    private String calle;
+    private String numeracion;
+    private String barrio;
+    private String manzanaPiso;
+    private String casaDepartamento;
+    private String referencia;
     @ManyToOne
-    private Persona persona;
-
+    private Localidad localidad;
 }
