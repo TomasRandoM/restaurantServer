@@ -10,7 +10,6 @@ import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.UUID;
 
 @Service
 public class JustificacionServiceImpl extends BaseServiceImpl<Justificacion, String> implements JustificacionService {
@@ -37,15 +36,16 @@ public class JustificacionServiceImpl extends BaseServiceImpl<Justificacion, Str
             RegistroHorario registroHorario = registroHorarioService.findById(registroHorarioId);
 
             Justificacion justificacion = new Justificacion();
-            justificacion.setId(UUID.randomUUID().toString());
             justificacion.setDocumentacion(documentacion);
             justificacion.setRegistroHorario(registroHorario);
             validar(justificacion, "SAVE");
             return justificacionRepository.save(justificacion);
 
         } catch (ErrorServiceException ex) {
+            ex.printStackTrace();
             throw ex;
         } catch (Exception ex) {
+            ex.printStackTrace();
             throw new ErrorServiceException("Error de sistemas");
         }
     }

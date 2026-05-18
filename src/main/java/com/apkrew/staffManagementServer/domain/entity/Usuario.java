@@ -1,5 +1,6 @@
 package com.apkrew.staffManagementServer.domain.entity;
 
+import com.apkrew.staffManagementServer.domain.enums.RolUsuario;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -21,7 +22,8 @@ public class Usuario extends Base {
 
     private String email;
     private String password;
+    private RolUsuario rol;
     @ManyToOne
-    private Rol rol;
+    private Persona persona;
 
 }

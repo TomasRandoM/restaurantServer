@@ -51,6 +51,10 @@ public class UsuarioServiceImpl extends BaseServiceImpl<Usuario,String> implemen
                 throw new ErrorServiceException("Debe indicar el nombre");
             }
 
+            if (entity.getPersona() == null) {
+                throw new ErrorServiceException("Debe indicar una persona asociada");
+            }
+
             if (caso.equals("SAVE")) {
                 if (usuarioRepository.existsByEmailAndEliminadoFalse(entity.getEmail())) {
                     throw new ErrorServiceException("El usuario ya existe en el sistema");

@@ -24,7 +24,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         try {
             var user = userService.searchByEmail(username);
             List<GrantedAuthority> permisos = new ArrayList();
-            GrantedAuthority p = new SimpleGrantedAuthority("ROLE_" + user.getRol().getNombre().toString());
+            GrantedAuthority p = new SimpleGrantedAuthority("ROLE_" + user.getRol().toString());
             permisos.add(p);
             return UserPrincipal.builder()
                     .userId(user.getId())

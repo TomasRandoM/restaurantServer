@@ -67,7 +67,6 @@ public class DocumentacionServiceImpl extends BaseServiceImpl<Documentacion, Str
     public Documentacion crearDocumentacion(TipoDocumentacion tipoDocumentacion, String observacion, MultipartFile archivo) throws ErrorServiceException {
         try {
             Documentacion documentacion = new Documentacion();
-            documentacion.setId(UUID.randomUUID().toString());
             String nombreOriginal = archivo.getOriginalFilename();
             documentacion.setNombreArchivo(nombreOriginal);
             String nuevoNombre = UUID.randomUUID().toString() + nombreOriginal.substring(nombreOriginal.lastIndexOf("."));
@@ -86,6 +85,7 @@ public class DocumentacionServiceImpl extends BaseServiceImpl<Documentacion, Str
         } catch (ErrorServiceException ex) {
             throw ex;
         } catch (Exception ex) {
+            ex.printStackTrace();
             throw new ErrorServiceException("Error de sistemas");
         }
     }

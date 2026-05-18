@@ -1,5 +1,6 @@
 package com.apkrew.staffManagementServer.domain.entity;
 
+import com.apkrew.staffManagementServer.domain.enums.TipoDocumentacion;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -15,17 +16,17 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper=false)
 @Audited
-public class Persona extends Base{
+public abstract class Persona extends Base{
     private String nombre;
     private String apellido;
-    private String telefono;
-    private String email;
+    private TipoDocumentacion tipoDocumentacion;
     private String dni;
     private Date fechaNacimiento;
     @ManyToOne
-    private Usuario usuario;
+    private Imagen imagen;
     @ManyToOne
     private Direccion direccion;
     @ManyToOne
     private Contacto contacto;
+
 }
