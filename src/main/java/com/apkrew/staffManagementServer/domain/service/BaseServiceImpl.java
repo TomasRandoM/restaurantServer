@@ -71,30 +71,17 @@ public abstract class BaseServiceImpl<E extends Base, ID extends Serializable> i
     @Override
     @Transactional
     public E update(ID id, E entity) throws Exception {
-
         try {
-
-            Optional<E> entityOptional =
-                    repository.findByIdAndEliminadoFalse(id);
-
-            E entityUpdate = entityOptional.get();
-
-            entity.setId(entityUpdate.getId());
-
             validar(entity, "UPDATE");
-
+            Optional<E> entityOptional = repository.findByIdAndEliminadoFalse(id);
+            E entityUpdate = entityOptional.get();
+            entity.setId(entityUpdate.getId());
             entityUpdate = repository.save(entity);
-
             return entityUpdate;
-
         } catch (ErrorServiceException ex) {
-
             throw ex;
-
         } catch (Exception e) {
-
-            throw new ErrorServiceException(
-                    "La entidad con el id ingresado no existe");
+            throw new ErrorServiceException("La entidad con el id ingresado no existe");
         }
     }
 
