@@ -24,17 +24,38 @@ public class ProvinciaServiceImpl extends BaseServiceImpl<Provincia, String> imp
                 throw new ErrorServiceException("Debe indicar el nombre");
             }
 
+            if (entity.getPais() == null || entity.getPais().getId() == null) {
+                throw new ErrorServiceException("Debe indicar el país");
+            }
+
+            entity.setNombre(entity.getNombre().trim());
+
             if (caso.equals("SAVE")) {
-                if (provinciaRepository.existsByNombreAndEliminadoFalse(entity.getNombre())) {
-                    throw new ErrorServiceException("La provincia ya existe en el sistema");
+
+                if (provinciaRepository.existsByNombreAndPaisIdAndEliminadoFalse(
+                        entity.getNombre(),
+                        entity.getPais().getId())) {
+
+                    throw new ErrorServiceException(
+                            "La provincia ya existe para el país seleccionado"
+                    );
                 }
+
             } else {
-                Provincia cc = provinciaRepository.findByNombreAndEliminadoFalse(entity.getNombre());
-                if (cc != null) {
-                    if (!cc.getId().equals(entity.getId())) {
-                        throw new ErrorServiceException("La provincia especificada ya existe en el sistema");
-                    }
+
+                Provincia provincia = provinciaRepository
+                        .findByNombreAndPaisIdAndEliminadoFalse(
+                                entity.getNombre(),
+                                entity.getPais().getId());
+
+                if (provincia != null &&
+                        !provincia.getId().equals(entity.getId())) {
+
+                    throw new ErrorServiceException(
+                            "La provincia ya existe para el país seleccionado"
+                    );
                 }
+
             }
             return true;
         } catch (ErrorServiceException ex) {
