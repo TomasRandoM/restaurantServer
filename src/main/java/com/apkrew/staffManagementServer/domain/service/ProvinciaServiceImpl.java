@@ -7,6 +7,8 @@ import com.apkrew.staffManagementServer.domain.repository.ProvinciaRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ProvinciaServiceImpl extends BaseServiceImpl<Provincia, String> implements ProvinciaService {
 
@@ -62,6 +64,14 @@ public class ProvinciaServiceImpl extends BaseServiceImpl<Provincia, String> imp
             throw ex;
         } catch (Exception ex) {
             throw new ErrorServiceException("Error de sistemas");
+        }
+    }
+
+    public List<Provincia> findByPais(String paisId) throws Exception {
+        try {
+            return provinciaRepository.findByPaisIdAndEliminadoFalse(paisId);
+        } catch (Exception e) {
+            throw new ErrorServiceException("Error al buscar provincias por país");
         }
     }
 }
