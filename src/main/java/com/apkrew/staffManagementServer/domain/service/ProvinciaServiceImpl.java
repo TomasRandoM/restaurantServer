@@ -7,6 +7,8 @@ import com.apkrew.staffManagementServer.domain.repository.ProvinciaRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ProvinciaServiceImpl extends BaseServiceImpl<Provincia, String> implements ProvinciaService {
 
@@ -24,23 +26,52 @@ public class ProvinciaServiceImpl extends BaseServiceImpl<Provincia, String> imp
                 throw new ErrorServiceException("Debe indicar el nombre");
             }
 
+            if (entity.getPais() == null || entity.getPais().getId() == null) {
+                throw new ErrorServiceException("Debe indicar el país");
+            }
+
+            entity.setNombre(entity.getNombre().trim());
+
             if (caso.equals("SAVE")) {
-                if (provinciaRepository.existsByNombreAndEliminadoFalse(entity.getNombre())) {
-                    throw new ErrorServiceException("La provincia ya existe en el sistema");
+
+                if (provinciaRepository.existsByNombreAndPaisIdAndEliminadoFalse(
+                        entity.getNombre(),
+                        entity.getPais().getId())) {
+
+                    throw new ErrorServiceException(
+                            "La provincia ya existe para el país seleccionado"
+                    );
                 }
+
             } else {
-                Provincia cc = provinciaRepository.findByNombreAndEliminadoFalse(entity.getNombre());
-                if (cc != null) {
-                    if (!cc.getId().equals(entity.getId())) {
-                        throw new ErrorServiceException("La provincia especificada ya existe en el sistema");
-                    }
+
+                Provincia provincia = provinciaRepository
+                        .findByNombreAndPaisIdAndEliminadoFalse(
+                                entity.getNombre(),
+                                entity.getPais().getId());
+
+                if (provincia != null &&
+                        !provincia.getId().equals(entity.getId())) {
+
+                    throw new ErrorServiceException(
+                            "La provincia ya existe para el país seleccionado"
+                    );
                 }
+
             }
             return true;
         } catch (ErrorServiceException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new ErrorServiceException("Error de sistemas");
+        }
+    }
+
+    public List<Provincia> findByPais(String paisId) throws Exception {
+        try {
+            return provinciaRepository.findByPaisIdAndEliminadoFalse(paisId);
+        } catch (Exception e) {
+            throw new ErrorServiceException("Error al buscar provincias por país");
         }
     }
 }
