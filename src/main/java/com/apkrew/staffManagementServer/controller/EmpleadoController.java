@@ -24,6 +24,7 @@ public class EmpleadoController extends BaseControllerImpl<Empleado, EmpleadoSer
             @ModelAttribute EmpleadoRequestDTO dto,
             @RequestPart("foto") MultipartFile foto) {
         try {
+            System.out.println("localidadId recibido: " + dto.toString());
             return ResponseEntity.status(HttpStatus.OK).body(service.crearEmpleado(dto, foto));
         } catch (ErrorServiceException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"error\":\"" + ex.getMessage() + "\"}");

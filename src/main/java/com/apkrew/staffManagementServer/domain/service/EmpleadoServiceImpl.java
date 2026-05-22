@@ -39,6 +39,7 @@ public class EmpleadoServiceImpl extends BaseServiceImpl<Empleado, String> imple
     @Transactional
     public Empleado crearEmpleado(EmpleadoRequestDTO dto, MultipartFile foto) throws ErrorServiceException {
         try {
+            System.out.println(dto.getLocalidadId());
             Localidad localidad = localidadService.findById(dto.getLocalidadId());
 
             Direccion direccion = new Direccion();
@@ -49,6 +50,7 @@ public class EmpleadoServiceImpl extends BaseServiceImpl<Empleado, String> imple
             direccion.setCasaDepartamento(dto.getCasaDepartamento());
             direccion.setReferencia(dto.getReferencia());
             direccion.setLocalidad(localidad);
+            System.out.println("hola");
             direccion = direccionService.save(direccion);
 
             Imagen imagen = new Imagen();
@@ -83,6 +85,7 @@ public class EmpleadoServiceImpl extends BaseServiceImpl<Empleado, String> imple
         } catch (IOException e) {
             throw new ErrorServiceException("Error procesando la imagen.");
         } catch (ErrorServiceException ex) {
+            ex.printStackTrace();
             throw ex;
         } catch (Exception ex) {
             throw new ErrorServiceException("Error de sistemas en empleado");
