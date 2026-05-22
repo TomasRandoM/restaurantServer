@@ -1,10 +1,15 @@
 package com.apkrew.staffManagementServer.domain.service;
 
+import com.apkrew.staffManagementServer.domain.entity.Departamento;
 import com.apkrew.staffManagementServer.domain.entity.Localidad;
+import com.apkrew.staffManagementServer.domain.entity.Provincia;
 import com.apkrew.staffManagementServer.domain.repository.BaseRepository;
 import com.apkrew.staffManagementServer.domain.repository.LocalidadRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
+import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class LocalidadServiceImpl extends  BaseServiceImpl<Localidad,String> implements LocalidadService{
@@ -14,6 +19,14 @@ public class LocalidadServiceImpl extends  BaseServiceImpl<Localidad,String> imp
     public LocalidadServiceImpl(BaseRepository<Localidad,String> baseRepository, LocalidadRepository localidadRepository){
         super(baseRepository);
         this.localidadRepository = localidadRepository;
+    }
+
+    public List<Localidad> findByDepartamento(String departamentoId) throws ErrorServiceException {
+        try {
+            return localidadRepository.findByDepartamentoIdAndEliminadoFalse(departamentoId);
+        } catch (Exception e) {
+            throw new ErrorServiceException("Error al buscar localidades por departamento");
+        }
     }
 
     @Override
