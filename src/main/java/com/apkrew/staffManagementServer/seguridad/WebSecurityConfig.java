@@ -38,7 +38,7 @@ public class WebSecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .securityMatcher("/**")
                 .authorizeHttpRequests(registry -> registry
-                        .requestMatchers("/api/v1/**").permitAll()
+                        .requestMatchers("/").permitAll()
                         .requestMatchers("/login").permitAll()
                         .anyRequest().authenticated()
                 );

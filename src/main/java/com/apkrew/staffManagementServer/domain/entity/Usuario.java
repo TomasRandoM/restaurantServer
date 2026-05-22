@@ -1,6 +1,7 @@
 package com.apkrew.staffManagementServer.domain.entity;
 
 import com.apkrew.staffManagementServer.domain.enums.RolUsuario;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -21,6 +22,7 @@ import org.hibernate.envers.Audited;
 public class Usuario extends Base {
 
     private String email;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     private RolUsuario rol;
     @ManyToOne

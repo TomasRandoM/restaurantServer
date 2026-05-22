@@ -25,18 +25,14 @@ public class UsuarioServiceImpl extends BaseServiceImpl<Usuario,String> implemen
     public Usuario save(Usuario entity) throws Exception {
         validar(entity, "SAVE");
         entity.setPassword(new BCryptPasswordEncoder().encode(entity.getPassword()));
-        Usuario usuario = super.save(entity);
-        usuario.setPassword("****");
-        return usuario;
+        return super.save(entity);
     }
 
     @Override
     public Usuario changePassword(Usuario entity) throws Exception {
         validar(entity, "UPDATE");
         entity.setPassword(new BCryptPasswordEncoder().encode(entity.getPassword()));
-        Usuario usuario = super.save(entity);
-        usuario.setPassword("****");
-        return usuario;
+        return super.save(entity);
     }
 
     public Usuario searchByEmail(String email) throws Exception {
