@@ -17,20 +17,17 @@ public class EmpleadoServiceImpl extends BaseServiceImpl<Empleado, String> imple
 
     private final EmpleadoRepository empleadoRepository;
     private final UsuarioServiceImpl usuarioService;
-    private final LocalidadServiceImpl localidadService;
     private final DireccionServiceImpl direccionService;
     private final ImageServiceImpl imageService;
 
     public EmpleadoServiceImpl(BaseRepository<Empleado, String> baseRepository,
                                EmpleadoRepository empleadoRepository,
                                UsuarioServiceImpl usuarioService,
-                               LocalidadServiceImpl localidadService,
                                DireccionServiceImpl direccionService,
                                ImageServiceImpl imageService) {
         super(baseRepository);
         this.empleadoRepository = empleadoRepository;
         this.usuarioService = usuarioService;
-        this.localidadService = localidadService;
         this.direccionService = direccionService;
         this.imageService = imageService;
     }
@@ -39,19 +36,8 @@ public class EmpleadoServiceImpl extends BaseServiceImpl<Empleado, String> imple
     @Transactional
     public Empleado crearEmpleado(EmpleadoRequestDTO dto, MultipartFile foto) throws ErrorServiceException {
         try {
-            System.out.println(dto.getLocalidadId());
-            Localidad localidad = localidadService.findById(dto.getLocalidadId());
 
-            Direccion direccion = new Direccion();
-            direccion.setCalle(dto.getCalle());
-            direccion.setNumeracion(dto.getNumeracion());
-            direccion.setBarrio(dto.getBarrio());
-            direccion.setManzanaPiso(dto.getManzanaPiso());
-            direccion.setCasaDepartamento(dto.getCasaDepartamento());
-            direccion.setReferencia(dto.getReferencia());
-            direccion.setLocalidad(localidad);
-            System.out.println("hola");
-            direccion = direccionService.save(direccion);
+            Direccion direccion = direccionService.findById(dto.getDireccionId());
 
             Imagen imagen = new Imagen();
             imagen.setNombre(foto.getOriginalFilename());
@@ -81,6 +67,38 @@ public class EmpleadoServiceImpl extends BaseServiceImpl<Empleado, String> imple
             usuarioService.save(usuario);
 
             return empleado;
+
+        } catch (IOException e) {
+            throw new ErrorServiceException("Error procesando la imagen.");
+        } catch (ErrorServiceException ex) {
+            ex.printStackTrace();
+            throw ex;
+        } catch (Exception ex) {
+            throw new ErrorServiceException("Error de sistemas en empleado");
+        }
+    }
+
+    @Override
+    @Transactional
+    public EmpleadoRequestDTO buscarEmpleado(String empleadoId) throws ErrorServiceException {
+        try {
+
+            Empleado empleado = findById(empleadoId);
+            EmpleadoRequestDTO empleadoDTO = new EmpleadoRequestDTO();
+
+            empleadoDTO.setNombre(empleado.getNombre());
+            empleadoDTO.setApellido(empleado.getApellido());
+            empleadoDTO.setTipoDocumentacion(empleado.getTipoDocumentacion());
+            empleadoDTO.setDni(empleado.getDni());
+            empleadoDTO.setFechaNacimiento(empleado.getFechaNacimiento());
+            empleadoDTO.setTipoEmpleado(empleado.getTipoEmpleado());
+            empleadoDTO.setDireccionId(empleado.getDireccion().getId());
+
+            Usuario usuario = usuarioService.searchByPersona(empleadoId);
+            empleadoDTO.setEmail(usuario.getEmail());
+            empleadoDTO.setRol(usuario.getRol());
+
+            return empleadoDTO;
 
         } catch (IOException e) {
             throw new ErrorServiceException("Error procesando la imagen.");

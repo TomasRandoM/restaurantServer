@@ -4,9 +4,11 @@ import com.apkrew.staffManagementServer.domain.entity.Documentacion;
 import com.apkrew.staffManagementServer.domain.entity.Justificacion;
 import com.apkrew.staffManagementServer.domain.entity.RegistroHorario;
 import com.apkrew.staffManagementServer.domain.enums.TipoDocumentacion;
+import com.apkrew.staffManagementServer.domain.enums.TipoJustificacion;
 import com.apkrew.staffManagementServer.domain.repository.BaseRepository;
 import com.apkrew.staffManagementServer.domain.repository.JustificacionRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,9 +30,11 @@ public class JustificacionServiceImpl extends BaseServiceImpl<Justificacion, Str
         this.registroHorarioService = registroHorarioService;
     }
 
+    @Transactional
     @Override
-    public Justificacion crearJustificacion(String registroHorarioId, TipoDocumentacion tipoDocumentacion, String observacion, MultipartFile archivo) throws ErrorServiceException {
+    public Justificacion crearJustificacion(String registroHorarioId, TipoJustificacion tipoDocumentacion, String observacion, MultipartFile archivo) throws ErrorServiceException {
         try {
+            Justificacion justificacion1 = justificacionRepository.getJustificacionByRegistroHorarioIdAndEliminadoFalse(registroHorarioId);
             Documentacion documentacion = documentacionService.crearDocumentacion(tipoDocumentacion, observacion, archivo);
 
             RegistroHorario registroHorario = registroHorarioService.findById(registroHorarioId);
@@ -39,7 +43,12 @@ public class JustificacionServiceImpl extends BaseServiceImpl<Justificacion, Str
             justificacion.setDocumentacion(documentacion);
             justificacion.setRegistroHorario(registroHorario);
             validar(justificacion, "SAVE");
-            return justificacionRepository.save(justificacion);
+            justificacion = justificacionRepository.save(justificacion);
+            if (justificacion1 != null) {
+                justificacion1.setEliminado(true);
+                justificacionRepository.save(justificacion1);
+            }
+            return justificacion;
 
         } catch (ErrorServiceException ex) {
             ex.printStackTrace();
@@ -47,6 +56,15 @@ public class JustificacionServiceImpl extends BaseServiceImpl<Justificacion, Str
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new ErrorServiceException("Error de sistemas");
+        }
+    }
+
+    @Override
+    public Justificacion buscarJustificacionPorRegistroHorario(String registroHorarioId) throws ErrorServiceException {
+        try {
+            return justificacionRepository.getJustificacionByRegistroHorarioIdAndEliminadoFalse(registroHorarioId);
+        } catch (Exception ex) {
+            throw new ErrorServiceException("Ocurrió un error al recuperar la justificación");
         }
     }
 

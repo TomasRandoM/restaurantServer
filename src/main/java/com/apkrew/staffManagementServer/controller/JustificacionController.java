@@ -2,6 +2,7 @@ package com.apkrew.staffManagementServer.controller;
 
 import com.apkrew.staffManagementServer.domain.entity.Justificacion;
 import com.apkrew.staffManagementServer.domain.enums.TipoDocumentacion;
+import com.apkrew.staffManagementServer.domain.enums.TipoJustificacion;
 import com.apkrew.staffManagementServer.domain.service.JustificacionServiceImpl;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
 import org.springframework.http.HttpStatus;
@@ -22,7 +23,7 @@ public class JustificacionController extends BaseControllerImpl<Justificacion, J
     @PostMapping(value = "/crear", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> crearJustificacion(
             @RequestParam("registroHorarioId") String registroHorarioId,
-            @RequestParam("tipoDocumentacion") TipoDocumentacion tipoDocumentacion,
+            @RequestParam("tipoDocumentacion") TipoJustificacion tipoDocumentacion,
             @RequestParam(value = "observacion", required = false) String observacion,
             @RequestPart("archivo") MultipartFile archivo) {
         try {
@@ -34,4 +35,18 @@ public class JustificacionController extends BaseControllerImpl<Justificacion, J
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"Error. Por favor intente más tarde.\"}");
         }
     }
+
+    @GetMapping(value = "/registroHorario/{id}")
+    public ResponseEntity<?> buscarJustificacionByRegistroHorario(
+            @PathVariable("id") String registroHorarioId) {
+        try {
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(service.buscarJustificacionPorRegistroHorario(registroHorarioId));
+        } catch (ErrorServiceException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"error\":\"" + ex.getMessage() + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"Error. Por favor intente más tarde.\"}");
+        }
+    }
+
 }

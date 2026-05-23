@@ -23,7 +23,7 @@ public class DocumentacionController extends BaseControllerImpl<Documentacion, D
             byte[] archivo = service.buscarDocumentacion(id);
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + id + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + service.findById(id).getNombreArchivo() + "\"")
                     .body(archivo);
         } catch (ErrorServiceException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"error\":\"" + ex.getMessage() + "\"}");

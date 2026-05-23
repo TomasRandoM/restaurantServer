@@ -2,6 +2,7 @@ package com.apkrew.staffManagementServer.domain.service;
 
 import com.apkrew.staffManagementServer.domain.entity.Documentacion;
 import com.apkrew.staffManagementServer.domain.enums.TipoDocumentacion;
+import com.apkrew.staffManagementServer.domain.enums.TipoJustificacion;
 import com.apkrew.staffManagementServer.domain.repository.BaseRepository;
 import com.apkrew.staffManagementServer.domain.repository.DocumentacionRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
@@ -64,7 +65,7 @@ public class DocumentacionServiceImpl extends BaseServiceImpl<Documentacion, Str
      * @return Documentacion
      * @throws ErrorServiceException
      */
-    public Documentacion crearDocumentacion(TipoDocumentacion tipoDocumentacion, String observacion, MultipartFile archivo) throws ErrorServiceException {
+    public Documentacion crearDocumentacion(TipoJustificacion tipoDocumentacion, String observacion, MultipartFile archivo) throws ErrorServiceException {
         try {
             Documentacion documentacion = new Documentacion();
             String nombreOriginal = archivo.getOriginalFilename();
