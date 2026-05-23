@@ -1,6 +1,7 @@
 package com.apkrew.staffManagementServer.domain.entity;
 
 import com.apkrew.staffManagementServer.domain.enums.TipoDocumentacion;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -23,6 +24,7 @@ public abstract class Persona extends Base{
     private String dni;
     private Date fechaNacimiento;
     @ManyToOne
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Imagen imagen;
     @ManyToOne
     private Direccion direccion;

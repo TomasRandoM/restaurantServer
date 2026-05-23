@@ -40,6 +40,10 @@ public class UsuarioServiceImpl extends BaseServiceImpl<Usuario,String> implemen
         return usuario;
     }
 
+    public Usuario searchByPersona(String id) {
+        return usuarioRepository.findByPersonaIdAndEliminadoFalse(id);
+    }
+
     @Override
     public boolean validar(Usuario entity, String caso) throws Exception {
         try {

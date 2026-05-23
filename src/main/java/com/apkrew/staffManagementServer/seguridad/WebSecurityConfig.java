@@ -53,7 +53,7 @@ public class WebSecurityConfig {
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
-
+        configuration.addExposedHeader("Content-Disposition");
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
 

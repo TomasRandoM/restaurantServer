@@ -7,4 +7,5 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface EmpleadoService extends BaseService<Empleado, String> {
     Empleado crearEmpleado(EmpleadoRequestDTO dto, MultipartFile foto) throws ErrorServiceException;
+    public EmpleadoRequestDTO buscarEmpleado(String empleadoId) throws ErrorServiceException;
 }

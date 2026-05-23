@@ -30,11 +30,5 @@ public class EmpleadoRequestDTO {
     private RolUsuario rol;
 
     // Direccion
-    private String calle;
-    private String numeracion;
-    private String barrio;
-    private String manzanaPiso;
-    private String casaDepartamento;
-    private String referencia;
-    private String localidadId;
+    private String direccionId;
 }
