@@ -168,4 +168,8 @@ public class EmpleadoServiceImpl extends BaseServiceImpl<Empleado, String> imple
             throw new ErrorServiceException("Error de sistemas");
         }
     }
+
+    public boolean existsEmpleadoByDni(String dni) {
+        return empleadoRepository.existsByDniAndEliminadoFalse(dni);
+    }
 }
