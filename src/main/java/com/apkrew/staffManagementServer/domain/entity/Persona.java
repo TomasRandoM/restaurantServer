@@ -10,7 +10,9 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.envers.Audited;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor
@@ -28,7 +30,10 @@ public abstract class Persona extends Base{
     private Imagen imagen;
     @ManyToOne
     private Direccion direccion;
-    @ManyToOne
-    private Contacto contacto;
+    @OneToMany
+    private List<Contacto> contacto = new ArrayList<>();
 
+    public void addContacto(Contacto contacto) {
+        this.contacto.add(contacto);
+    }
 }

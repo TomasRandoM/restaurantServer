@@ -26,8 +26,10 @@ public class EmpleadoController extends BaseControllerImpl<Empleado, EmpleadoSer
         try {
             return ResponseEntity.status(HttpStatus.OK).body(service.crearEmpleado(dto, foto));
         } catch (ErrorServiceException ex) {
+            ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"error\":\"" + ex.getMessage() + "\"}");
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"Error. Por favor intente más tarde.\"}");
         }
     }
