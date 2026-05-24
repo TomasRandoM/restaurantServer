@@ -19,17 +19,21 @@ public class EmpleadoServiceImpl extends BaseServiceImpl<Empleado, String> imple
     private final UsuarioServiceImpl usuarioService;
     private final DireccionServiceImpl direccionService;
     private final ImageServiceImpl imageService;
+    private final ContactoCorreoElectronicoService contactoCorreoElectronicoService;
+    private final ContactoTelefonicoService contactoTelefonicoService;
 
     public EmpleadoServiceImpl(BaseRepository<Empleado, String> baseRepository,
                                EmpleadoRepository empleadoRepository,
                                UsuarioServiceImpl usuarioService,
                                DireccionServiceImpl direccionService,
-                               ImageServiceImpl imageService) {
+                               ImageServiceImpl imageService, ContactoCorreoElectronicoService contactoCorreoElectronicoService, ContactoTelefonicoService contactoTelefonicoService) {
         super(baseRepository);
         this.empleadoRepository = empleadoRepository;
         this.usuarioService = usuarioService;
         this.direccionService = direccionService;
         this.imageService = imageService;
+        this.contactoCorreoElectronicoService = contactoCorreoElectronicoService;
+        this.contactoTelefonicoService = contactoTelefonicoService;
     }
 
     @Override
@@ -56,7 +60,25 @@ public class EmpleadoServiceImpl extends BaseServiceImpl<Empleado, String> imple
             empleado.setDireccion(direccion);
             empleado.setImagen(imagen);
 
+            ContactoCorreoElectronico contactoCorreoElectronico = new ContactoCorreoElectronico();
+            contactoCorreoElectronico.setEmail(dto.getEmail());
+            contactoCorreoElectronico.setTipoContacto(dto.getTipoContacto());
+            contactoCorreoElectronico.setObservacion(dto.getObservacion());
+
+            ContactoTelefonico contactoTelefonico = new ContactoTelefonico();
+            contactoTelefonico.setTelefono(dto.getContactoTelefono());
+            contactoTelefonico.setTipoContacto(dto.getTipoContacto());
+            contactoTelefonico.setObservacion(dto.getObservacion());
+            contactoTelefonico.setTipoTelefono(dto.getTipoTelefono());
+
+            empleado.addContacto(contactoCorreoElectronico);
+            empleado.addContacto(contactoTelefonico);
+
             validar(empleado, "SAVE");
+
+            contactoCorreoElectronico = contactoCorreoElectronicoService.save(contactoCorreoElectronico);
+            contactoTelefonico = contactoTelefonicoService.save(contactoTelefonico);
+
             empleado = empleadoRepository.save(empleado);
 
             Usuario usuario = new Usuario();
@@ -97,6 +119,16 @@ public class EmpleadoServiceImpl extends BaseServiceImpl<Empleado, String> imple
             Usuario usuario = usuarioService.searchByPersona(empleadoId);
             empleadoDTO.setEmail(usuario.getEmail());
             empleadoDTO.setRol(usuario.getRol());
+
+            for (Contacto contacto : empleado.getContacto()) {
+                if (contacto instanceof ContactoCorreoElectronico cce) {
+                    empleadoDTO.setTipoContacto(cce.getTipoContacto());
+                    empleadoDTO.setObservacion(cce.getObservacion());
+                } else if (contacto instanceof ContactoTelefonico ct) {
+                    empleadoDTO.setContactoTelefono(ct.getTelefono());
+                    empleadoDTO.setTipoTelefono(ct.getTipoTelefono());
+                }
+            }
 
             return empleadoDTO;
 
@@ -149,6 +181,39 @@ public class EmpleadoServiceImpl extends BaseServiceImpl<Empleado, String> imple
                 throw new ErrorServiceException("Debe indicar la imagen");
             }
 
+            if (entity.getContacto() == null || entity.getContacto().isEmpty()) {
+                throw new ErrorServiceException("Debe indicar al menos un contacto");
+            }
+
+            boolean tieneCorreo = false;
+            boolean tieneTelefono = false;
+            for (Contacto contacto : entity.getContacto()) {
+                if (contacto.getTipoContacto() == null) {
+                    throw new ErrorServiceException("Debe indicar el tipo de contacto");
+                }
+                if (contacto instanceof ContactoCorreoElectronico cce) {
+                    if (cce.getEmail() == null || cce.getEmail().trim().isEmpty()) {
+                        throw new ErrorServiceException("Debe indicar el correo electrónico");
+                    }
+                    tieneCorreo = true;
+                } else if (contacto instanceof ContactoTelefonico ct) {
+                    if (ct.getTelefono() == null || ct.getTelefono().trim().isEmpty()) {
+                        throw new ErrorServiceException("Debe indicar el número de teléfono");
+                    }
+                    if (ct.getTipoTelefono() == null) {
+                        throw new ErrorServiceException("Debe indicar el tipo de teléfono");
+                    }
+                    tieneTelefono = true;
+                }
+            }
+
+            if (!tieneCorreo) {
+                throw new ErrorServiceException("Debe indicar un correo electrónico");
+            }
+            if (!tieneTelefono) {
+                throw new ErrorServiceException("Debe indicar un teléfono");
+            }
+
             if (caso.equals("SAVE")) {
                 if (empleadoRepository.existsByDniAndEliminadoFalse(entity.getDni())) {
                     throw new ErrorServiceException("Ya existe un empleado con ese DNI");
@@ -167,5 +232,9 @@ public class EmpleadoServiceImpl extends BaseServiceImpl<Empleado, String> imple
         } catch (Exception ex) {
             throw new ErrorServiceException("Error de sistemas");
         }
+    }
+
+    public boolean existsEmpleadoByDni(String dni) {
+        return empleadoRepository.existsByDniAndEliminadoFalse(dni);
     }
 }
