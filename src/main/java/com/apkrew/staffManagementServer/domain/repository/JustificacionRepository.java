@@ -5,4 +5,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface JustificacionRepository extends BaseRepository<Justificacion, String> {
+    Justificacion getJustificacionByRegistroHorarioIdAndEliminadoFalse(String registroHorarioId);
 }

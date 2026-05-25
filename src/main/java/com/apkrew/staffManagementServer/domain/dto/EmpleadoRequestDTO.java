@@ -1,8 +1,6 @@
 package com.apkrew.staffManagementServer.domain.dto;
 
-import com.apkrew.staffManagementServer.domain.enums.RolUsuario;
-import com.apkrew.staffManagementServer.domain.enums.TipoDocumentacion;
-import com.apkrew.staffManagementServer.domain.enums.TipoEmpleado;
+import com.apkrew.staffManagementServer.domain.enums.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -30,11 +28,11 @@ public class EmpleadoRequestDTO {
     private RolUsuario rol;
 
     // Direccion
-    private String calle;
-    private String numeracion;
-    private String barrio;
-    private String manzanaPiso;
-    private String casaDepartamento;
-    private String referencia;
-    private String localidadId;
+    private String direccionId;
+
+    // Contacto
+    private TipoContacto tipoContacto;
+    private String contactoTelefono;
+    private TipoTelefono tipoTelefono;
+    private String observacion;
 }

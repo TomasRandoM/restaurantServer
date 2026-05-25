@@ -1,6 +1,7 @@
 package com.apkrew.staffManagementServer.domain.entity;
 
 import com.apkrew.staffManagementServer.domain.enums.TipoDocumentacion;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -9,7 +10,9 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.envers.Audited;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor
@@ -23,10 +26,14 @@ public abstract class Persona extends Base{
     private String dni;
     private Date fechaNacimiento;
     @ManyToOne
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Imagen imagen;
     @ManyToOne
     private Direccion direccion;
-    @ManyToOne
-    private Contacto contacto;
+    @OneToMany
+    private List<Contacto> contacto = new ArrayList<>();
 
+    public void addContacto(Contacto contacto) {
+        this.contacto.add(contacto);
+    }
 }

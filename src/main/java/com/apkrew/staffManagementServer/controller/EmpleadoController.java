@@ -24,12 +24,25 @@ public class EmpleadoController extends BaseControllerImpl<Empleado, EmpleadoSer
             @ModelAttribute EmpleadoRequestDTO dto,
             @RequestPart("foto") MultipartFile foto) {
         try {
-            System.out.println("localidadId recibido: " + dto.toString());
             return ResponseEntity.status(HttpStatus.OK).body(service.crearEmpleado(dto, foto));
         } catch (ErrorServiceException ex) {
+            ex.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"error\":\"" + ex.getMessage() + "\"}");
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"Error. Por favor intente más tarde.\"}");
+        }
+    }
+
+    @Override
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getOne(@PathVariable String id) {
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(service.buscarEmpleado(id));
+        } catch (ErrorServiceException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"error\":\""+ex.getMessage()+"\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"error\":\"Error. Por favor intente más tarde.\"}");
         }
     }
 }
