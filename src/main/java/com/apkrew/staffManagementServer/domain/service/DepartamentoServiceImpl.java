@@ -6,6 +6,8 @@ import com.apkrew.staffManagementServer.domain.repository.DepartamentoRepository
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class DepartamentoServiceImpl
         extends BaseServiceImpl<Departamento, String>
@@ -82,6 +84,14 @@ public class DepartamentoServiceImpl
             throw ex;
         } catch (Exception ex) {
             throw new ErrorServiceException("Error de sistemas");
+        }
+    }
+
+    public List<Departamento> findByProvincia(String provinciaId) throws Exception {
+        try {
+            return departamentoRepository.findByProvinciaIdAndEliminadoFalse(provinciaId);
+        } catch (Exception e) {
+            throw new ErrorServiceException("Error al buscar los departamentos");
         }
     }
 }

@@ -3,6 +3,8 @@ package com.apkrew.staffManagementServer.domain.repository;
 import com.apkrew.staffManagementServer.domain.entity.Departamento;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface DepartamentoRepository extends BaseRepository<Departamento, String> {
 
@@ -15,4 +17,6 @@ public interface DepartamentoRepository extends BaseRepository<Departamento, Str
             String nombre,
             String provinciaId
     );
+
+    List<Departamento> findByProvinciaIdAndEliminadoFalse(String provinciaId);
 }

@@ -27,6 +27,22 @@ public class DireccionServiceImpl extends BaseServiceImpl<Direccion, String> imp
                 throw new ErrorServiceException("Debe indicar la calle");
             }
 
+            if (entity.getBarrio() != null && entity.getBarrio().length() > 100) {
+                throw new ErrorServiceException("El barrio no puede superar los 100 caracteres");
+            }
+
+            if (entity.getManzanaPiso() != null && entity.getManzanaPiso().length() > 100) {
+                throw new ErrorServiceException("La manzana/piso no puede superar los 100 caracteres");
+            }
+
+            if (entity.getCasaDepartamento() != null && entity.getCasaDepartamento().length() > 100) {
+                throw new ErrorServiceException("La casa/departamento no puede superar los 100 caracteres");
+            }
+
+            if (entity.getReferencia() != null && entity.getReferencia().length() > 255) {
+                throw new ErrorServiceException("La referencia no puede superar los 255 caracteres");
+            }
+
             if (entity.getNumeracion() == null || entity.getNumeracion().trim().isEmpty()) {
                 throw new ErrorServiceException("Debe indicar la numeración");
             }
@@ -37,12 +53,12 @@ public class DireccionServiceImpl extends BaseServiceImpl<Direccion, String> imp
 
             if (caso.equals("SAVE")) {
                 if (direccionRepository.existsByCalleAndNumeracionAndLocalidadIdAndEliminadoFalse(
-                        entity.getCalle(), entity.getNumeracion(), entity.getLocalidad().getId())) {
+                        entity.getCalle().trim(), entity.getNumeracion().trim(), entity.getLocalidad().getId())) {
                     throw new ErrorServiceException("La dirección ya existe en el sistema");
                 }
             } else {
                 Direccion cc = direccionRepository.findByCalleAndNumeracionAndLocalidadIdAndEliminadoFalse(
-                        entity.getCalle(), entity.getNumeracion(), entity.getLocalidad().getId());
+                        entity.getCalle().trim(), entity.getNumeracion().trim(), entity.getLocalidad().getId());
                 if (cc != null && !cc.getId().equals(entity.getId())) {
                     throw new ErrorServiceException("La dirección especificada ya existe en el sistema");
                 }
