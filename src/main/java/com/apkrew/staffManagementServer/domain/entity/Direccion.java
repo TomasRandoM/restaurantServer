@@ -1,6 +1,7 @@
 package com.apkrew.staffManagementServer.domain.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -24,5 +25,6 @@ public class Direccion extends Base {
     private String casaDepartamento;
     private String referencia;
     @ManyToOne
+    @JoinColumn(name = "localidad_id")
     private Localidad localidad;
 }
