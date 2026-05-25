@@ -8,7 +8,7 @@ import java.util.List;
 @Repository
 public interface DepartamentoRepository extends BaseRepository<Departamento, String> {
 
-    boolean existsByNombreAndProvinciaIdAndEliminadoFalse(
+    boolean existsByNombreIgnoreCaseAndProvinciaIdAndEliminadoFalse(
             String nombre,
             String provinciaId
     );

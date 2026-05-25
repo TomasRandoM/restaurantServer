@@ -45,12 +45,10 @@ public class DepartamentoServiceImpl
                 );
             }
 
-            entity.setNombre(entity.getNombre().trim().toUpperCase());
-
             if (caso.equals("SAVE")) {
 
                 if (departamentoRepository
-                        .existsByNombreAndProvinciaIdAndEliminadoFalse(
+                        .existsByNombreIgnoreCaseAndProvinciaIdAndEliminadoFalse(
                                 entity.getNombre(),
                                 entity.getProvincia().getId()
                         )) {
