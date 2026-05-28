@@ -1,7 +1,6 @@
 package com.apkrew.staffManagementServer.domain.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.apkrew.staffManagementServer.domain.enums.TipoMovimientoStock;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -10,16 +9,18 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.envers.Audited;
 
+import java.time.LocalDateTime;
+
 @Entity
 @NoArgsConstructor
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Audited
-public class Stock extends Base{
-    private double minimo;
-    private double cantidadActual;
+public class MovimientoStock extends Base {
+    private LocalDateTime fecha = LocalDateTime.now();
+    private double cantidad;
+    private TipoMovimientoStock tipoMovimiento;
     @ManyToOne
-    @JoinColumn(name = "articulo_id")
-    @JsonIgnoreProperties("stocks")
-    private Articulo articulo;
+    @JoinColumn(name = "stock_id")
+    private Stock stock;
 }
