@@ -14,9 +14,9 @@ import org.hibernate.envers.Audited;
 @Audited
 public class DetalleReciboDeSueldo extends Base {
 
-    private int cantidad;
+    private Integer cantidad;
 
-    private double valor;
+    private Double valor;
 
     @Enumerated(EnumType.STRING)
     private TipoDetalleReciboSueldo tipoDetalleRecibo;

@@ -26,12 +26,12 @@ public class DetalleReciboDeSueldoServiceImpl
 
         try {
 
-            if (entity.getCantidad() <= 0) {
+            if (entity.getCantidad() == null || entity.getCantidad() <= 0) {
                 throw new ErrorServiceException(
                         "La cantidad debe ser mayor a 0");
             }
 
-            if (entity.getValor() <= 0) {
+            if (entity.getValor() == null || entity.getValor() <= 0) {
                 throw new ErrorServiceException(
                         "El valor debe ser mayor a 0");
             }
