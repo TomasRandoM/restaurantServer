@@ -17,4 +17,6 @@ public interface ReciboDeSueldoService extends BaseService<ReciboDeSueldo, Strin
     ReciboDeSueldoResponseDTO findResponseById(String id) throws Exception;
 
     List<ReciboDeSueldoResponseDTO> findAllResponse() throws Exception;
+
+    org.springframework.data.domain.Page<ReciboDeSueldoResponseDTO> findAllResponse(org.springframework.data.domain.Pageable pageable) throws Exception;
 }

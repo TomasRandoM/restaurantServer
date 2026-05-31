@@ -280,6 +280,22 @@ public class ReciboDeSueldoServiceImpl
         }
     }
 
+    @Override
+    @Transactional
+    public org.springframework.data.domain.Page<ReciboDeSueldoResponseDTO> findAllResponse(org.springframework.data.domain.Pageable pageable)
+            throws Exception {
+
+        try {
+            org.springframework.data.domain.Page<ReciboDeSueldo> recibos = findAll(pageable);
+            return recibos.map(this::toResponseDTO);
+        } catch (ErrorServiceException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new ErrorServiceException("Error de sistemas");
+        }
+    }
+
     private void validarDTO(ReciboDeSueldoRequestDTO dto)
             throws ErrorServiceException {
 
