@@ -1,8 +1,6 @@
 package com.apkrew.staffManagementServer.domain.service;
 
 import com.apkrew.staffManagementServer.domain.entity.Stock;
-import com.apkrew.staffManagementServer.domain.entity.UnidadDeMedida;
-import com.apkrew.staffManagementServer.domain.repository.ArticuloRepository;
 import com.apkrew.staffManagementServer.domain.repository.BaseRepository;
 import com.apkrew.staffManagementServer.domain.repository.StockRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
@@ -13,12 +11,12 @@ import java.util.Optional;
 @Service
 public class StockServiceImpl extends BaseServiceImpl<Stock, String> implements StockService {
     private final StockRepository stockRepository;
-    private final ArticuloRepository articuloRepository;
+    private final ArticuloServiceImpl articuloService;
 
-    public StockServiceImpl(BaseRepository<Stock, String> baseRepository, StockRepository stockRepository, ArticuloRepository articuloRepository) {
+    public StockServiceImpl(BaseRepository<Stock, String> baseRepository, StockRepository stockRepository, ArticuloServiceImpl articuloService) {
         super(baseRepository);
         this.stockRepository = stockRepository;
-        this.articuloRepository = articuloRepository;
+        this.articuloService = articuloService;
     }
 
     @Override
@@ -29,14 +27,14 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, String> implements 
             }
 
             if (caso.equals("SAVE")) {
-                if (!articuloRepository.existsById(entity.getArticulo().getId())) {
+                if (articuloService.findById(entity.getArticulo().getId()) == null) {
                     throw new ErrorServiceException("El artículo no existe");
                 }
                 if (stockRepository.existsByArticuloIdAndEliminadoFalse(entity.getArticulo().getId())) {
                     throw new ErrorServiceException("Ya hay stock para el artículo");
                 }
             } else {
-                Optional<Stock> stockOptional = stockRepository.findByArticulo(entity.getArticulo());
+                Optional<Stock> stockOptional = stockRepository.findByArticuloAndEliminadoFalse(entity.getArticulo());
                 if (stockOptional.isPresent()) {
                     if (!stockOptional.get().getId().equals(entity.getId())) {
                         throw new ErrorServiceException("El stock no existe en el sistema");

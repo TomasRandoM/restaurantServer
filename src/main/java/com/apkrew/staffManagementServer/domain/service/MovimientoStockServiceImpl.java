@@ -16,13 +16,16 @@ import java.util.Optional;
 public class MovimientoStockServiceImpl extends BaseServiceImpl<MovimientoStock, String> {
     private final MovimientoStockRepository movimientoStockRepository;
     private final StockRepository stockRepository;
+    private final StockServiceImpl stockService;
 
     public MovimientoStockServiceImpl(BaseRepository<MovimientoStock, String>baseRepository,
                                       MovimientoStockRepository movimientoStockRepository,
+                                      StockServiceImpl stockService,
                                       StockRepository stockRepository) {
         super(baseRepository);
         this.movimientoStockRepository = movimientoStockRepository;
         this.stockRepository = stockRepository;
+        this.stockService = stockService;
     }
 
     @Override
@@ -30,8 +33,7 @@ public class MovimientoStockServiceImpl extends BaseServiceImpl<MovimientoStock,
     public MovimientoStock save(MovimientoStock entity) throws Exception {
         try {
             validar(entity, "SAVE");
-            Stock stock = stockRepository.findById(entity.getStock().getId())
-                    .orElseThrow(() -> new ErrorServiceException("Stock no encontrado"));
+            Stock stock = stockService.findById(entity.getStock().getId());
             if (entity.getTipoMovimiento() == TipoMovimientoStock.ENTRADA) {
                 stock.setCantidadActual(
                         stock.getCantidadActual() + entity.getCantidad()
@@ -41,7 +43,7 @@ public class MovimientoStockServiceImpl extends BaseServiceImpl<MovimientoStock,
                         stock.getCantidadActual() - entity.getCantidad()
                 );
             }
-            stockRepository.save(stock);
+            stockService.update(stock.getId(), stock);
             entity = repository.save(entity);
             return entity;
         } catch (ErrorServiceException ex) {
@@ -56,8 +58,7 @@ public class MovimientoStockServiceImpl extends BaseServiceImpl<MovimientoStock,
     public MovimientoStock update(String id, MovimientoStock entity) throws Exception {
         try {
             validar(entity, "UPDATE");
-            Stock stock = stockRepository.findById(entity.getStock().getId())
-                    .orElseThrow(() -> new ErrorServiceException("Stock no encontrado"));
+            Stock stock = stockService.findById(entity.getStock().getId());
             MovimientoStock entityUpdate = movimientoStockRepository.findByIdAndEliminadoFalse(id)
                     .orElseThrow(() -> new ErrorServiceException("Movimiento de stock no encontrado"));
             if (entity.getTipoMovimiento() == entityUpdate.getTipoMovimiento()) {
@@ -74,7 +75,7 @@ public class MovimientoStockServiceImpl extends BaseServiceImpl<MovimientoStock,
                     stock.setCantidadActual(stock.getCantidadActual() + entityUpdate.getCantidad() + entity.getCantidad());
                 }
             }
-            stockRepository.save(stock);
+            stockService.update(stock.getId(), stock);
             entity.setId(id);
             entityUpdate = repository.save(entity);
             return entityUpdate;
@@ -92,15 +93,14 @@ public class MovimientoStockServiceImpl extends BaseServiceImpl<MovimientoStock,
             if (repository.existsByIdAndEliminadoFalse(id)) {
                 MovimientoStock entity = movimientoStockRepository.findByIdAndEliminadoFalse(id)
                                 .orElseThrow(() -> new ErrorServiceException("Movimiento de stock no encontrado"));
-                Stock stock = stockRepository.findById(entity.getStock().getId())
-                        .orElseThrow(() -> new ErrorServiceException("Stock no encontrado"));
+                Stock stock = stockService.findById(entity.getStock().getId());
                 entity.setEliminado(true);
                 if(entity.getTipoMovimiento() == TipoMovimientoStock.ENTRADA) {
                     stock.setCantidadActual(stock.getCantidadActual() - entity.getCantidad());
                 } else {
                     stock.setCantidadActual(stock.getCantidadActual() + entity.getCantidad());
                 }
-                stockRepository.save(stock);
+                stockService.update(stock.getId(), stock);
                 repository.save(entity);
                 return true;
             } else {
@@ -116,8 +116,7 @@ public class MovimientoStockServiceImpl extends BaseServiceImpl<MovimientoStock,
     @Override
     public boolean validar(MovimientoStock entity, String caso) throws Exception {
         try {
-            Stock stock = stockRepository.findById(entity.getStock().getId())
-                    .orElseThrow(() -> new ErrorServiceException("Stock no encontrado"));
+            Stock stock = stockService.findById(entity.getStock().getId());
             if (entity.getCantidad() <= 0) {
                 throw new ErrorServiceException("La cantidad debe ser mayor a 0");
             }
