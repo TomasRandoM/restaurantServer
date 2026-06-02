@@ -8,6 +8,6 @@ import java.util.Optional;
 
 @Repository
 public interface StockRepository extends BaseRepository<Stock, String> {
-    Optional<Stock> findByArticulo(Articulo articulo);
+    Optional<Stock> findByArticuloAndEliminadoFalse(Articulo articulo);
     boolean existsByArticuloIdAndEliminadoFalse(String articuloId);
 }
