@@ -6,5 +6,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface EmpleadoRepository extends BaseRepository<Empleado, String> {
     boolean existsByDniAndEliminadoFalse(String dni);
+    boolean existsByIdAndEliminadoFalse(String id);
     Empleado findByDniAndEliminadoFalse(String dni);
 }

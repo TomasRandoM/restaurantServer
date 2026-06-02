@@ -5,6 +5,6 @@ import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
 
 public interface QRSecretsService {
     public boolean validar(QRSecrets entity, String caso) throws Exception;
-    public String getKey(String empleadoDNI) throws ErrorServiceException;
+    public QRSecrets getKey(String empleadoDNI) throws ErrorServiceException;
     public void initializeKey();
 }

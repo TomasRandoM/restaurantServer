@@ -42,13 +42,13 @@ public class QRSecretsServiceImpl implements QRSecretsService {
         qrSecretsRepository.save(qrSecrets1);
     }
 
-    public String getKey(String empleadoDNI) throws ErrorServiceException {
-        if (empleadoService.existsEmpleadoByDni(empleadoDNI)) {
+    public QRSecrets getKey(String empleadoId) throws ErrorServiceException {
+        if (empleadoService.existsEmpleadoById(empleadoId)) {
             List<QRSecrets> list = qrSecretsRepository.findByEliminadoFalse();
             if (list.isEmpty()) {
                 throw new ErrorServiceException("No se encontró una llave disponible.");
             }
-            return list.getFirst().getQrKey();
+            return list.getFirst();
         }
         else {
             throw new ErrorServiceException("El empleado no se encuentra validado en el sistema.");
