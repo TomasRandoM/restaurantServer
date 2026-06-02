@@ -9,8 +9,6 @@ import com.apkrew.staffManagementServer.domain.entity.Empleado;
 import com.apkrew.staffManagementServer.domain.entity.ItemReciboDeSueldo;
 import com.apkrew.staffManagementServer.domain.entity.ReciboDeSueldo;
 import com.apkrew.staffManagementServer.domain.repository.BaseRepository;
-import com.apkrew.staffManagementServer.domain.repository.EmpleadoRepository;
-import com.apkrew.staffManagementServer.domain.repository.ItemReciboDeSueldoRepository;
 import com.apkrew.staffManagementServer.domain.repository.ReciboDeSueldoRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
 import jakarta.transaction.Transactional;
@@ -25,19 +23,19 @@ public class ReciboDeSueldoServiceImpl
         implements ReciboDeSueldoService {
 
     private final ReciboDeSueldoRepository reciboDeSueldoRepository;
-    private final EmpleadoRepository empleadoRepository;
-    private final ItemReciboDeSueldoRepository itemReciboDeSueldoRepository;
+    private final EmpleadoService empleadoService;
+    private final ItemReciboDeSueldoService itemReciboDeSueldoService;
 
     public ReciboDeSueldoServiceImpl(
             BaseRepository<ReciboDeSueldo, String> baseRepository,
             ReciboDeSueldoRepository reciboDeSueldoRepository,
-            EmpleadoRepository empleadoRepository,
-            ItemReciboDeSueldoRepository itemReciboDeSueldoRepository) {
+            EmpleadoService empleadoService,
+            ItemReciboDeSueldoService itemReciboDeSueldoService) {
 
         super(baseRepository);
         this.reciboDeSueldoRepository = reciboDeSueldoRepository;
-        this.empleadoRepository = empleadoRepository;
-        this.itemReciboDeSueldoRepository = itemReciboDeSueldoRepository;
+        this.empleadoService = empleadoService;
+        this.itemReciboDeSueldoService = itemReciboDeSueldoService;
     }
 
     @Override
@@ -133,10 +131,12 @@ public class ReciboDeSueldoServiceImpl
         try {
             validarDTO(dto);
 
-            Empleado empleado = empleadoRepository
-                    .findByIdAndEliminadoFalse(dto.getEmpleadoId())
-                    .orElseThrow(() -> new ErrorServiceException(
-                            "El empleado indicado no existe"));
+            Empleado empleado;
+            try {
+                empleado = empleadoService.findById(dto.getEmpleadoId());
+            } catch (Exception ex) {
+                throw new ErrorServiceException("El empleado indicado no existe");
+            }
 
             ReciboDeSueldo recibo = ReciboDeSueldo.builder()
                     .empleado(empleado)
@@ -149,12 +149,15 @@ public class ReciboDeSueldoServiceImpl
             double total = 0;
 
             for (DetalleRequestDTO detDTO : dto.getDetalles()) {
-                ItemReciboDeSueldo item = itemReciboDeSueldoRepository
-                        .findByIdAndEliminadoFalse(detDTO.getItemReciboDeSueldoId())
-                        .orElseThrow(() -> new ErrorServiceException(
-                                "El item de recibo de sueldo con id "
-                                        + detDTO.getItemReciboDeSueldoId()
-                                        + " no existe"));
+                ItemReciboDeSueldo item;
+                try {
+                    item = itemReciboDeSueldoService.findById(detDTO.getItemReciboDeSueldoId());
+                } catch (Exception ex) {
+                    throw new ErrorServiceException(
+                            "El item de recibo de sueldo con id "
+                                    + detDTO.getItemReciboDeSueldoId()
+                                    + " no existe");
+                }
 
                 DetalleReciboDeSueldo detalle = DetalleReciboDeSueldo.builder()
                         .cantidad(detDTO.getCantidad())
@@ -194,10 +197,12 @@ public class ReciboDeSueldoServiceImpl
                     .orElseThrow(() -> new ErrorServiceException(
                             "El recibo de sueldo con id " + id + " no existe"));
 
-            Empleado empleado = empleadoRepository
-                    .findByIdAndEliminadoFalse(dto.getEmpleadoId())
-                    .orElseThrow(() -> new ErrorServiceException(
-                            "El empleado indicado no existe"));
+            Empleado empleado;
+            try {
+                empleado = empleadoService.findById(dto.getEmpleadoId());
+            } catch (Exception ex) {
+                throw new ErrorServiceException("El empleado indicado no existe");
+            }
 
             recibo.setEmpleado(empleado);
             recibo.setFechaDePago(dto.getFechaDePago());
@@ -210,12 +215,15 @@ public class ReciboDeSueldoServiceImpl
             double total = 0;
 
             for (DetalleRequestDTO detDTO : dto.getDetalles()) {
-                ItemReciboDeSueldo item = itemReciboDeSueldoRepository
-                        .findByIdAndEliminadoFalse(detDTO.getItemReciboDeSueldoId())
-                        .orElseThrow(() -> new ErrorServiceException(
-                                "El item de recibo de sueldo con id "
-                                        + detDTO.getItemReciboDeSueldoId()
-                                        + " no existe"));
+                ItemReciboDeSueldo item;
+                try {
+                    item = itemReciboDeSueldoService.findById(detDTO.getItemReciboDeSueldoId());
+                } catch (Exception ex) {
+                    throw new ErrorServiceException(
+                            "El item de recibo de sueldo con id "
+                                    + detDTO.getItemReciboDeSueldoId()
+                                    + " no existe");
+                }
 
                 DetalleReciboDeSueldo detalle = DetalleReciboDeSueldo.builder()
                         .cantidad(detDTO.getCantidad())
