@@ -15,9 +15,9 @@ public class QRSecretsController {
     QRSecretsService qrSecretsService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getKey(@PathVariable String employeeid) {
+    public ResponseEntity<?> getKey(@PathVariable String id) {
         try {
-            return ResponseEntity.status(HttpStatus.OK).body(qrSecretsService.getKey(employeeid));
+            return ResponseEntity.status(HttpStatus.OK).body(qrSecretsService.getKey(id));
         } catch (ErrorServiceException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"error\":\""+ex.getMessage()+"\"}");
         } catch (Exception e) {

@@ -234,7 +234,23 @@ public class EmpleadoServiceImpl extends BaseServiceImpl<Empleado, String> imple
         }
     }
 
-    public boolean existsEmpleadoByDni(String dni) {
-        return empleadoRepository.existsByDniAndEliminadoFalse(dni);
+    public boolean existsEmpleadoById(String id) {
+        return empleadoRepository.existsByIdAndEliminadoFalse(id);
+    }
+
+    @Override
+    public Empleado buscarEmpleadoByCorreo(String correo) throws ErrorServiceException {
+        try {
+            Persona persona = usuarioService.searchByEmail(correo).getPersona();
+            if (persona instanceof Empleado) {
+                return (Empleado) persona;
+            }
+            else {
+                throw new ErrorServiceException("Error. La persona no es un empleado");
+            }
+        } catch (Exception e) {
+            throw new ErrorServiceException("Error. No se encontró el empleado con el mail asociado");
+        }
+
     }
 }

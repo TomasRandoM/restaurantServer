@@ -45,4 +45,15 @@ public class EmpleadoController extends BaseControllerImpl<Empleado, EmpleadoSer
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"error\":\"Error. Por favor intente más tarde.\"}");
         }
     }
+
+    @GetMapping("/email/{correo}")
+    public ResponseEntity<?> getOneByCorreo(@PathVariable String correo) {
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(service.buscarEmpleadoByCorreo(correo));
+        } catch (ErrorServiceException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"error\":\""+ex.getMessage()+"\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"error\":\"Error. Por favor intente más tarde.\"}");
+        }
+    }
 }
