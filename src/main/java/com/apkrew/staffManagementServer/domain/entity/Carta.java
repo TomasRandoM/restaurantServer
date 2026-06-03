@@ -16,10 +16,16 @@ import java.util.List;
 @Audited
 public class Carta extends Base {
 
+    private String nombre;
+
     private LocalDate fechaDesde;
 
     private LocalDate fechaHasta;
 
-    @OneToMany(mappedBy = "carta")
+    @OneToMany(
+            mappedBy = "carta",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private List<SeccionCarta> secciones;
 }

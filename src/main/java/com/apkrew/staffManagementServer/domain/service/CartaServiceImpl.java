@@ -3,14 +3,13 @@ package com.apkrew.staffManagementServer.domain.service;
 
 import com.apkrew.staffManagementServer.domain.dto.ArticuloCartaDTO;
 import com.apkrew.staffManagementServer.domain.dto.CartaDTO;
+import com.apkrew.staffManagementServer.domain.dto.CartaListadoDTO;
 import com.apkrew.staffManagementServer.domain.dto.CategoriaDTO;
-import com.apkrew.staffManagementServer.domain.entity.Carta;
-import com.apkrew.staffManagementServer.domain.entity.DetalleSeccionCarta;
-import com.apkrew.staffManagementServer.domain.entity.DetalleSeccionCartaArticuloIndividual;
-import com.apkrew.staffManagementServer.domain.entity.SeccionCarta;
+import com.apkrew.staffManagementServer.domain.entity.*;
 import com.apkrew.staffManagementServer.domain.repository.BaseRepository;
 import com.apkrew.staffManagementServer.domain.repository.CartaRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -23,12 +22,20 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
 
     private final CartaRepository cartaRepository;
 
+    private final CategoriaService categoriaService;
+    private final ArticuloService articuloService;
+
     public CartaServiceImpl(
             BaseRepository<Carta, String> baserepository,
-            CartaRepository cartaRepository) {
+            CartaRepository cartaRepository,
+            CategoriaService categoriaService,
+            ArticuloService articuloService) {
 
         super(baserepository);
+
         this.cartaRepository = cartaRepository;
+        this.categoriaService = categoriaService;
+        this.articuloService = articuloService;
     }
 
     @Override
@@ -37,17 +44,48 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
 
         try {
 
+            if (entity.getNombre() == null || entity.getNombre().isEmpty()) {
+                throw new ErrorServiceException(
+                        "Debe indicar el nombre de la carta");
+            }
+
             if (entity.getFechaDesde() == null) {
-                throw new ErrorServiceException("Debe indicar la fecha de inicio");
+                throw new ErrorServiceException(
+                        "Debe indicar la fecha de inicio");
             }
 
             if (entity.getFechaHasta() == null) {
-                throw new ErrorServiceException("Debe indicar la fecha de fin");
+                throw new ErrorServiceException(
+                        "Debe indicar la fecha de fin");
             }
 
             if (entity.getFechaHasta().isBefore(entity.getFechaDesde())) {
                 throw new ErrorServiceException(
                         "La fecha de fin no puede ser menor a la fecha de inicio");
+            }
+
+            List<Carta> cartasSolapadas =
+                    cartaRepository.buscarCartasSolapadas(
+                            entity.getFechaDesde(),
+                            entity.getFechaHasta());
+
+            if (caso.equals("SAVE")) {
+
+                if (!cartasSolapadas.isEmpty()) {
+                    throw new ErrorServiceException(
+                            "Ya existe una carta para ese período");
+                }
+
+            } else {
+
+                for (Carta carta : cartasSolapadas) {
+
+                    if (!carta.getId().equals(entity.getId())) {
+
+                        throw new ErrorServiceException(
+                                "Ya existe una carta para ese período");
+                    }
+                }
             }
 
             return true;
@@ -128,5 +166,72 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
         dto.setCategorias(categorias);
 
         return dto;
+    }
+
+    @Transactional
+    public Carta crearCarta(CartaDTO dto) throws Exception {
+
+        Carta carta = new Carta();
+
+        carta.setNombre(dto.getNombre());
+        carta.setFechaDesde(dto.getFechaDesde());
+        carta.setFechaHasta(dto.getFechaHasta());
+
+        List<SeccionCarta> secciones = new ArrayList<>();
+
+        for (CategoriaDTO categoriaDTO : dto.getCategorias()) {
+
+            SeccionCarta seccion = new SeccionCarta();
+
+            Categoria categoria =
+                    categoriaService.findById(categoriaDTO.getId());
+
+            seccion.setCategoria(categoria);
+            seccion.setCarta(carta);
+
+            List<DetalleSeccionCarta> detalles = new ArrayList<>();
+
+            for (ArticuloCartaDTO articuloDTO : categoriaDTO.getProductos()) {
+
+                Articulo articulo =
+                        articuloService.findById(articuloDTO.getId());
+
+                DetalleSeccionCartaArticuloIndividual detalle =
+                        new DetalleSeccionCartaArticuloIndividual();
+
+                detalle.setArticulo(articulo);
+                detalle.setPrecio(articuloDTO.getPrecio());
+                detalle.setSeccionCarta(seccion);
+
+                detalles.add(detalle);
+            }
+
+            seccion.setDetalles(detalles);
+
+            secciones.add(seccion);
+        }
+
+        carta.setSecciones(secciones);
+
+        return save(carta);
+    }
+
+    public List<CartaListadoDTO> obtenerListado() {
+
+        List<Carta> cartas = cartaRepository.findAll();
+
+        return cartas.stream()
+                .map(c -> {
+                    CartaListadoDTO dto =
+                            new CartaListadoDTO();
+
+                    dto.setId(c.getId());
+                    dto.setNombre(c.getNombre());
+                    dto.setFechaDesde(c.getFechaDesde());
+                    dto.setFechaHasta(c.getFechaHasta());
+
+                    return dto;
+                })
+                .toList();
     }
 }
