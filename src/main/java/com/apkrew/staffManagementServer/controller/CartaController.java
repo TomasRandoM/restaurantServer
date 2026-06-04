@@ -3,8 +3,7 @@ package com.apkrew.staffManagementServer.controller;
 import com.apkrew.staffManagementServer.domain.dto.CartaDTO;
 import com.apkrew.staffManagementServer.domain.entity.Carta;
 import com.apkrew.staffManagementServer.domain.service.CartaServiceImpl;
-import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +19,7 @@ public class CartaController
         super(service);
     }
 
-    @GetMapping("/activa/menu")
+    @GetMapping("/activa")
     public ResponseEntity<?> obtenerCartaActiva() {
         try {
             return ResponseEntity.ok(service.obtenerCartaActivaDTO());
@@ -62,12 +61,17 @@ public class CartaController
     }
 
     @GetMapping("/listado")
-    public ResponseEntity<?> listado() {
+    public ResponseEntity<?> listado(
+            Pageable pageable) {
+
         try {
+
             return ResponseEntity.ok(
-                    service.obtenerListado()
+                    service.obtenerListado(pageable)
             );
+
         } catch (Exception e) {
+
             return ResponseEntity.badRequest()
                     .body(e.getMessage());
         }

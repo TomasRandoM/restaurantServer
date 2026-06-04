@@ -11,7 +11,8 @@ import com.apkrew.staffManagementServer.domain.repository.CartaRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -155,23 +156,52 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
         return cartaRepository.save(carta);
     }
 
-    public List<CartaListadoDTO> obtenerListado() {
+    @Override
+    @Transactional
+    public boolean delete(String id) throws Exception {
 
-        List<Carta> cartas = cartaRepository.findAll();
+        Carta carta = findById(id);
 
-        return cartas.stream()
-                .map(c -> {
-                    CartaListadoDTO dto =
-                            new CartaListadoDTO();
+        if (carta.isEliminado()) {
+            throw new ErrorServiceException(
+                    "La carta ya fue eliminada");
+        }
 
-                    dto.setId(c.getId());
-                    dto.setNombre(c.getNombre());
-                    dto.setFechaDesde(c.getFechaDesde());
-                    dto.setFechaHasta(c.getFechaHasta());
+        carta.setEliminado(true);
 
-                    return dto;
-                })
-                .toList();
+        for (SeccionCarta seccion : carta.getSecciones()) {
+
+            seccion.setEliminado(true);
+
+            for (DetalleSeccionCarta detalle : seccion.getDetalles()) {
+
+                detalle.setEliminado(true);
+            }
+        }
+
+        cartaRepository.save(carta);
+
+        return true;
+    }
+
+    public Page<CartaListadoDTO> obtenerListado(
+            Pageable pageable) {
+
+        Page<Carta> cartas =
+                cartaRepository.findByEliminadoFalse(pageable);
+
+        return cartas.map(c -> {
+
+            CartaListadoDTO dto =
+                    new CartaListadoDTO();
+
+            dto.setId(c.getId());
+            dto.setNombre(c.getNombre());
+            dto.setFechaDesde(c.getFechaDesde());
+            dto.setFechaHasta(c.getFechaHasta());
+
+            return dto;
+        });
     }
 
     private CartaDTO convertToDTO(Carta carta) {
