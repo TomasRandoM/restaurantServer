@@ -112,9 +112,74 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
                 .orElseThrow(() -> new ErrorServiceException(
                         "No existe una carta activa"));
 
+        return convertToDTO(carta);
+    }
+
+    public CartaDTO obtenerCartaDTO(String id) throws Exception {
+
+        Carta carta = findById(id);
+
+        return convertToDTO(carta);
+    }
+
+    @Transactional
+    public Carta crearCarta(CartaDTO dto) throws Exception {
+
+        Carta carta = new Carta();
+
+        cargarDatosCarta(carta, dto);
+
+        carta.setSecciones(
+                construirSecciones(carta, dto));
+
+        return save(carta);
+    }
+
+    @Transactional
+    public Carta editarCarta(
+            String id,
+            CartaDTO dto) throws Exception {
+
+        Carta carta = findById(id);
+
+        cargarDatosCarta(carta, dto);
+
+        validar(carta, "UPDATE");
+
+        List<SeccionCarta> nuevasSecciones =
+                construirSecciones(carta, dto);
+
+        carta.getSecciones().clear();
+        carta.getSecciones().addAll(nuevasSecciones);
+
+        return cartaRepository.save(carta);
+    }
+
+    public List<CartaListadoDTO> obtenerListado() {
+
+        List<Carta> cartas = cartaRepository.findAll();
+
+        return cartas.stream()
+                .map(c -> {
+                    CartaListadoDTO dto =
+                            new CartaListadoDTO();
+
+                    dto.setId(c.getId());
+                    dto.setNombre(c.getNombre());
+                    dto.setFechaDesde(c.getFechaDesde());
+                    dto.setFechaHasta(c.getFechaHasta());
+
+                    return dto;
+                })
+                .toList();
+    }
+
+    private CartaDTO convertToDTO(Carta carta) {
+
         CartaDTO dto = new CartaDTO();
 
         dto.setId(carta.getId());
+        dto.setNombre(carta.getNombre());
         dto.setFechaDesde(carta.getFechaDesde());
         dto.setFechaHasta(carta.getFechaHasta());
 
@@ -168,14 +233,18 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
         return dto;
     }
 
-    @Transactional
-    public Carta crearCarta(CartaDTO dto) throws Exception {
-
-        Carta carta = new Carta();
+    private void cargarDatosCarta(
+            Carta carta,
+            CartaDTO dto) {
 
         carta.setNombre(dto.getNombre());
         carta.setFechaDesde(dto.getFechaDesde());
         carta.setFechaHasta(dto.getFechaHasta());
+    }
+
+    private List<SeccionCarta> construirSecciones(
+            Carta carta,
+            CartaDTO dto) throws Exception {
 
         List<SeccionCarta> secciones = new ArrayList<>();
 
@@ -189,12 +258,15 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
             seccion.setCategoria(categoria);
             seccion.setCarta(carta);
 
-            List<DetalleSeccionCarta> detalles = new ArrayList<>();
+            List<DetalleSeccionCarta> detalles =
+                    new ArrayList<>();
 
-            for (ArticuloCartaDTO articuloDTO : categoriaDTO.getProductos()) {
+            for (ArticuloCartaDTO articuloDTO :
+                    categoriaDTO.getProductos()) {
 
                 Articulo articulo =
-                        articuloService.findById(articuloDTO.getId());
+                        articuloService.findById(
+                                articuloDTO.getId());
 
                 DetalleSeccionCartaArticuloIndividual detalle =
                         new DetalleSeccionCartaArticuloIndividual();
@@ -211,27 +283,8 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
             secciones.add(seccion);
         }
 
-        carta.setSecciones(secciones);
-
-        return save(carta);
+        return secciones;
     }
 
-    public List<CartaListadoDTO> obtenerListado() {
 
-        List<Carta> cartas = cartaRepository.findAll();
-
-        return cartas.stream()
-                .map(c -> {
-                    CartaListadoDTO dto =
-                            new CartaListadoDTO();
-
-                    dto.setId(c.getId());
-                    dto.setNombre(c.getNombre());
-                    dto.setFechaDesde(c.getFechaDesde());
-                    dto.setFechaHasta(c.getFechaHasta());
-
-                    return dto;
-                })
-                .toList();
-    }
 }

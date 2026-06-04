@@ -30,7 +30,7 @@ public class CartaController
         }
     }
 
-    @PostMapping("/crear-completa")
+    @PostMapping("/crear")
     public ResponseEntity<?> crearCarta(
             @RequestBody CartaDTO dto) {
         try {
@@ -38,6 +38,24 @@ public class CartaController
                     service.crearCarta(dto)
             );
         } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @Override
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getOne(
+            @PathVariable String id) {
+
+        try {
+
+            return ResponseEntity.ok(
+                    service.obtenerCartaDTO(id)
+            );
+
+        } catch (Exception e) {
+
             return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));
         }
@@ -52,6 +70,24 @@ public class CartaController
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/editar/{id}")
+    public ResponseEntity<?> editarCarta(
+            @PathVariable String id,
+            @RequestBody CartaDTO dto) throws Exception{
+
+        try {
+
+            return ResponseEntity.ok(
+                    service.editarCarta(id, dto)
+            );
+
+        } catch (Exception e) {
+
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 }
