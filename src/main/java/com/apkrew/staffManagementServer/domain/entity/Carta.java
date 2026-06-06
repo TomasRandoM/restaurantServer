@@ -22,6 +22,8 @@ public class Carta extends Base {
 
     private LocalDate fechaHasta;
 
+    private boolean activo;
+
     @OneToMany(
             mappedBy = "carta",
             cascade = CascadeType.ALL,

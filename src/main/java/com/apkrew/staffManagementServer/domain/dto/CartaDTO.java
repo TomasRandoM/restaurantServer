@@ -16,5 +16,7 @@ public class CartaDTO {
 
     private LocalDate fechaHasta;
 
+    private boolean activo;
+
     private List<CategoriaDTO> categorias;
 }
