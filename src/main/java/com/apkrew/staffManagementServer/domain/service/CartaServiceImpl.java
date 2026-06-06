@@ -5,6 +5,7 @@ import com.apkrew.staffManagementServer.domain.dto.ArticuloCartaDTO;
 import com.apkrew.staffManagementServer.domain.dto.CartaDTO;
 import com.apkrew.staffManagementServer.domain.dto.CartaListadoDTO;
 import com.apkrew.staffManagementServer.domain.dto.CategoriaDTO;
+import com.apkrew.staffManagementServer.domain.dto.MenuCartaDTO;
 import com.apkrew.staffManagementServer.domain.entity.*;
 import com.apkrew.staffManagementServer.domain.repository.BaseRepository;
 import com.apkrew.staffManagementServer.domain.repository.CartaRepository;
@@ -25,18 +26,21 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
 
     private final CategoriaService categoriaService;
     private final ArticuloService articuloService;
+    private final MenuService menuService;
 
     public CartaServiceImpl(
             BaseRepository<Carta, String> baserepository,
             CartaRepository cartaRepository,
             CategoriaService categoriaService,
-            ArticuloService articuloService) {
+            ArticuloService articuloService,
+            MenuService menuService) {
 
         super(baserepository);
 
         this.cartaRepository = cartaRepository;
         this.categoriaService = categoriaService;
         this.articuloService = articuloService;
+        this.menuService = menuService;
     }
 
     @Override
@@ -228,6 +232,8 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
             List<ArticuloCartaDTO> productos =
                     new ArrayList<>();
 
+            List<MenuCartaDTO> menus = new ArrayList<>();
+
             for (DetalleSeccionCarta detalle :
                     seccion.getDetalles()) {
 
@@ -250,10 +256,27 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
                             ai.getPrecio());
 
                     productos.add(producto);
+
+                } else if (detalle instanceof
+                        DetalleSeccionCartaMenu dscm
+                        && dscm.getMenus() != null) {
+
+                    for (Menu menu : dscm.getMenus()) {
+
+                        MenuCartaDTO menuDTO =
+                                new MenuCartaDTO();
+
+                        menuDTO.setId(menu.getId());
+                        menuDTO.setNombre(menu.getNombre());
+                        menuDTO.setPrecio(menu.getPrecio());
+
+                        menus.add(menuDTO);
+                    }
                 }
             }
 
             categoriaDTO.setProductos(productos);
+            categoriaDTO.setMenus(menus);
 
             categorias.add(categoriaDTO);
         }
@@ -278,38 +301,104 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
 
         List<SeccionCarta> secciones = new ArrayList<>();
 
-        for (CategoriaDTO categoriaDTO : dto.getCategorias()) {
+        if (dto.getCategorias() == null) {
+            return secciones;
+        }
+
+        for (int i = 0; i < dto.getCategorias().size(); i++) {
+            CategoriaDTO categoriaDTO = dto.getCategorias().get(i);
+
+            if (categoriaDTO.getId() == null
+                    || categoriaDTO.getId().isEmpty()) {
+                throw new ErrorServiceException(
+                        "Debe seleccionar una categoría en la posición "
+                                + (i + 1));
+            }
+
+            Categoria categoria;
+            try {
+                categoria = categoriaService.findById(categoriaDTO.getId());
+            } catch (Exception e) {
+                throw new ErrorServiceException(
+                        "Categoría no encontrada (id: "
+                                + categoriaDTO.getId() + ")");
+            }
 
             SeccionCarta seccion = new SeccionCarta();
-
-            Categoria categoria =
-                    categoriaService.findById(categoriaDTO.getId());
-
             seccion.setCategoria(categoria);
             seccion.setCarta(carta);
 
-            List<DetalleSeccionCarta> detalles =
-                    new ArrayList<>();
+            List<DetalleSeccionCarta> detalles = new ArrayList<>();
 
-            for (ArticuloCartaDTO articuloDTO :
-                    categoriaDTO.getProductos()) {
+            if (categoriaDTO.getProductos() != null) {
+                for (int j = 0; j < categoriaDTO.getProductos().size(); j++) {
+                    ArticuloCartaDTO articuloDTO =
+                            categoriaDTO.getProductos().get(j);
 
-                Articulo articulo =
-                        articuloService.findById(
+                    if (articuloDTO.getId() == null
+                            || articuloDTO.getId().isEmpty()) {
+                        throw new ErrorServiceException(
+                                "Debe seleccionar todos los artículos "
+                                        + "(categoría " + (i + 1)
+                                        + ", fila " + (j + 1) + ")");
+                    }
+
+                    Articulo articulo;
+                    try {
+                        articulo = articuloService.findById(
                                 articuloDTO.getId());
+                    } catch (Exception e) {
+                        throw new ErrorServiceException(
+                                "Artículo no encontrado (id: "
+                                        + articuloDTO.getId() + ")");
+                    }
 
-                DetalleSeccionCartaArticuloIndividual detalle =
-                        new DetalleSeccionCartaArticuloIndividual();
+                    DetalleSeccionCartaArticuloIndividual detalle =
+                            new DetalleSeccionCartaArticuloIndividual();
 
-                detalle.setArticulo(articulo);
-                detalle.setPrecio(articuloDTO.getPrecio());
-                detalle.setSeccionCarta(seccion);
+                    detalle.setArticulo(articulo);
+                    detalle.setPrecio(articuloDTO.getPrecio());
+                    detalle.setSeccionCarta(seccion);
 
-                detalles.add(detalle);
+                    detalles.add(detalle);
+                }
+            }
+
+            if (categoriaDTO.getMenus() != null) {
+                for (int j = 0; j < categoriaDTO.getMenus().size(); j++) {
+                    MenuCartaDTO menuDTO =
+                            categoriaDTO.getMenus().get(j);
+
+                    if (menuDTO.getId() == null
+                            || menuDTO.getId().isEmpty()) {
+                        throw new ErrorServiceException(
+                                "Debe seleccionar todos los menús "
+                                        + "(categoría " + (i + 1)
+                                        + ", fila " + (j + 1) + ")");
+                    }
+
+                    Menu menu;
+                    try {
+                        menu = menuService.findById(menuDTO.getId());
+                    } catch (Exception e) {
+                        throw new ErrorServiceException(
+                                "Menú no encontrado (id: "
+                                        + menuDTO.getId() + ")");
+                    }
+
+                    DetalleSeccionCartaMenu detalle =
+                            new DetalleSeccionCartaMenu();
+
+                    List<Menu> menus = new ArrayList<>();
+                    menus.add(menu);
+                    detalle.setMenus(menus);
+                    detalle.setSeccionCarta(seccion);
+
+                    detalles.add(detalle);
+                }
             }
 
             seccion.setDetalles(detalles);
-
             secciones.add(seccion);
         }
 
