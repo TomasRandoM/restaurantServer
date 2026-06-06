@@ -21,18 +21,15 @@ public class MenuServiceImpl
         implements MenuService {
 
     private final MenuRepository menuRepository;
-    private final DetalleSeccionCartaMenuService detalleSeccionCartaMenuService;
     private final ArticuloService articuloService;
 
     public MenuServiceImpl(
             BaseRepository<Menu, String> baserepository,
             MenuRepository menuRepository,
-            DetalleSeccionCartaMenuService detalleSeccionCartaMenuService,
             ArticuloService articuloService) {
 
         super(baserepository);
         this.menuRepository = menuRepository;
-        this.detalleSeccionCartaMenuService = detalleSeccionCartaMenuService;
         this.articuloService = articuloService;
     }
 
@@ -81,13 +78,28 @@ public class MenuServiceImpl
         Page<Menu> menus =
                 menuRepository.findByEliminadoFalse(pageable);
 
-        return menus.map(m -> {
-            MenuListadoDTO dto = new MenuListadoDTO();
-            dto.setId(m.getId());
-            dto.setNombre(m.getNombre());
-            dto.setPrecio(m.getPrecio());
-            return dto;
-        });
+        return menus.map(m -> toListadoDTO(m));
+    }
+
+    @Override
+    public List<MenuListadoDTO> obtenerListado() throws Exception {
+
+        List<Menu> menus = menuRepository.findByEliminadoFalse();
+
+        List<MenuListadoDTO> result = new ArrayList<>();
+        for (Menu m : menus) {
+            result.add(toListadoDTO(m));
+        }
+        return result;
+    }
+
+    private MenuListadoDTO toListadoDTO(Menu m) {
+
+        MenuListadoDTO dto = new MenuListadoDTO();
+        dto.setId(m.getId());
+        dto.setNombre(m.getNombre());
+        dto.setPrecio(m.getPrecio());
+        return dto;
     }
 
     @Override
@@ -151,26 +163,6 @@ public class MenuServiceImpl
 
         menu.setNombre(dto.getNombre());
         menu.setPrecio(dto.getPrecio());
-
-        if (menu.getDetalleSeccionCartaMenu() == null) {
-            menu.setDetalleSeccionCartaMenu(resolverSeccionMenu());
-        }
-    }
-
-    private DetalleSeccionCartaMenu resolverSeccionMenu() {
-
-        try {
-            List<DetalleSeccionCartaMenu> secciones =
-                    detalleSeccionCartaMenuService.findAll();
-
-            if (secciones == null || secciones.isEmpty()) {
-                return null;
-            }
-
-            return secciones.get(0);
-        } catch (Exception e) {
-            return null;
-        }
     }
 
     private List<DetalleMenu> construirDetalles(

@@ -50,6 +50,16 @@ public class MenuController
         }
     }
 
+    @GetMapping("/listado-simple")
+    public ResponseEntity<?> listadoSimple() {
+        try {
+            return ResponseEntity.ok(service.obtenerListado());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PutMapping("/editar/{id}")
     public ResponseEntity<?> editarMenu(
             @PathVariable String id,
