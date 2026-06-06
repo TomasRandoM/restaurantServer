@@ -14,7 +14,6 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,30 +68,6 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
                         "La fecha de fin no puede ser menor a la fecha de inicio");
             }
 
-            List<Carta> cartasSolapadas =
-                    cartaRepository.buscarCartasSolapadas(
-                            entity.getFechaDesde(),
-                            entity.getFechaHasta());
-
-            if (caso.equals("SAVE")) {
-
-                if (!cartasSolapadas.isEmpty()) {
-                    throw new ErrorServiceException(
-                            "Ya existe una carta para ese período");
-                }
-
-            } else {
-
-                for (Carta carta : cartasSolapadas) {
-
-                    if (!carta.getId().equals(entity.getId())) {
-
-                        throw new ErrorServiceException(
-                                "Ya existe una carta para ese período");
-                    }
-                }
-            }
-
             return true;
 
         } catch (ErrorServiceException ex) {
@@ -106,18 +81,31 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
     @Override
     public CartaDTO obtenerCartaActivaDTO() throws Exception {
 
-        LocalDate hoy = LocalDate.now();
-
         Carta carta = cartaRepository
-                .findByFechaDesdeLessThanEqualAndFechaHastaGreaterThanEqualAndEliminadoFalse(
-                        hoy,
-                        hoy)
-                .stream()
-                .findFirst()
+                .findByActivoTrueAndEliminadoFalse()
                 .orElseThrow(() -> new ErrorServiceException(
                         "No existe una carta activa"));
 
         return convertToDTO(carta);
+    }
+
+    @Transactional
+    public void activarCarta(String id) throws Exception {
+
+        Carta carta = findById(id);
+
+        List<Carta> activas = cartaRepository.findAllActivas();
+
+        for (Carta otra : activas) {
+            if (!otra.getId().equals(carta.getId())) {
+                otra.setActivo(false);
+            }
+        }
+
+        carta.setActivo(true);
+
+        cartaRepository.saveAll(activas);
+        cartaRepository.save(carta);
     }
 
     public CartaDTO obtenerCartaDTO(String id) throws Exception {
@@ -133,6 +121,10 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
         Carta carta = new Carta();
 
         cargarDatosCarta(carta, dto);
+
+        if (carta.isActivo()) {
+            desactivarTodasLasActivas();
+        }
 
         carta.setSecciones(
                 construirSecciones(carta, dto));
@@ -151,6 +143,10 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
 
         validar(carta, "UPDATE");
 
+        if (carta.isActivo()) {
+            desactivarTodasLasActivasExcluyendo(id);
+        }
+
         List<SeccionCarta> nuevasSecciones =
                 construirSecciones(carta, dto);
 
@@ -158,6 +154,24 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
         carta.getSecciones().addAll(nuevasSecciones);
 
         return cartaRepository.save(carta);
+    }
+
+    private void desactivarTodasLasActivas() {
+        List<Carta> activas = cartaRepository.findAllActivas();
+        for (Carta otra : activas) {
+            otra.setActivo(false);
+        }
+        cartaRepository.saveAll(activas);
+    }
+
+    private void desactivarTodasLasActivasExcluyendo(String idExcluir) {
+        List<Carta> activas = cartaRepository.findAllActivas();
+        for (Carta otra : activas) {
+            if (!otra.getId().equals(idExcluir)) {
+                otra.setActivo(false);
+            }
+        }
+        cartaRepository.saveAll(activas);
     }
 
     @Override
@@ -203,6 +217,7 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
             dto.setNombre(c.getNombre());
             dto.setFechaDesde(c.getFechaDesde());
             dto.setFechaHasta(c.getFechaHasta());
+            dto.setActivo(c.isActivo());
 
             return dto;
         });
@@ -216,6 +231,7 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
         dto.setNombre(carta.getNombre());
         dto.setFechaDesde(carta.getFechaDesde());
         dto.setFechaHasta(carta.getFechaHasta());
+        dto.setActivo(carta.isActivo());
 
         List<CategoriaDTO> categorias = new ArrayList<>();
 
@@ -293,6 +309,7 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
         carta.setNombre(dto.getNombre());
         carta.setFechaDesde(dto.getFechaDesde());
         carta.setFechaHasta(dto.getFechaHasta());
+        carta.setActivo(dto.isActivo());
     }
 
     private List<SeccionCarta> construirSecciones(

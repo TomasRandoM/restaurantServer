@@ -94,4 +94,18 @@ public class CartaController
                     .body(Map.of("error", e.getMessage()));
         }
     }
+
+    @PutMapping("/{id}/activar")
+    public ResponseEntity<?> activarCarta(
+            @PathVariable String id) {
+
+        try {
+            service.activarCarta(id);
+            return ResponseEntity.ok(
+                    Map.of("mensaje", "Carta activada correctamente"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
 }
