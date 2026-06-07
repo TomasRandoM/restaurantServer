@@ -15,7 +15,8 @@ import java.util.List;
 @Builder
 public class ComandaResponseDTO {
     private String id;
-    private Date fechaComanda;
+    private Date fechaSolicitudComanda;
+    private Date fechaEntregaComanda;
     private EstadoComanda estadoComanda;
     private Double total;
     private List<DetalleComandaResponseDTO> detalles;
