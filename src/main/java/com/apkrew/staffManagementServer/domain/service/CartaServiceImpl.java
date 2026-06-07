@@ -287,6 +287,7 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
 
                         menuDTO.setId(menu.getId());
                         menuDTO.setNombre(menu.getNombre());
+                        menuDTO.setDescripcion(menu.getDescripcion());
                         menuDTO.setPrecio(menu.getPrecio());
 
                         menus.add(menuDTO);

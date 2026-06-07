@@ -98,6 +98,7 @@ public class MenuServiceImpl
         MenuListadoDTO dto = new MenuListadoDTO();
         dto.setId(m.getId());
         dto.setNombre(m.getNombre());
+        dto.setDescripcion(m.getDescripcion());
         dto.setPrecio(m.getPrecio());
         return dto;
     }
@@ -162,6 +163,7 @@ public class MenuServiceImpl
             throws ErrorServiceException {
 
         menu.setNombre(dto.getNombre());
+        menu.setDescripcion(dto.getDescripcion());
         menu.setPrecio(dto.getPrecio());
     }
 
@@ -202,6 +204,7 @@ public class MenuServiceImpl
 
         dto.setId(menu.getId());
         dto.setNombre(menu.getNombre());
+        dto.setDescripcion(menu.getDescripcion());
         dto.setPrecio(menu.getPrecio());
 
         List<MenuDetalleDTO> detalles = new ArrayList<>();
