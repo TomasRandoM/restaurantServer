@@ -40,6 +40,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(registry -> registry
                         .requestMatchers("/").permitAll()
                         .requestMatchers("/login").permitAll()
+                        .requestMatchers("/api/v1/carta/activa").permitAll()
                         .anyRequest().authenticated()
                 );
         return http.build();

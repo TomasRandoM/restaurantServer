@@ -3,8 +3,7 @@ package com.apkrew.staffManagementServer.controller;
 import com.apkrew.staffManagementServer.domain.dto.CartaDTO;
 import com.apkrew.staffManagementServer.domain.entity.Carta;
 import com.apkrew.staffManagementServer.domain.service.CartaServiceImpl;
-import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +19,7 @@ public class CartaController
         super(service);
     }
 
-    @GetMapping("/activa/menu")
+    @GetMapping("/activa")
     public ResponseEntity<?> obtenerCartaActiva() {
         try {
             return ResponseEntity.ok(service.obtenerCartaActivaDTO());
@@ -30,7 +29,7 @@ public class CartaController
         }
     }
 
-    @PostMapping("/crear-completa")
+    @PostMapping("/crear")
     public ResponseEntity<?> crearCarta(
             @RequestBody CartaDTO dto) {
         try {
@@ -43,15 +42,70 @@ public class CartaController
         }
     }
 
-    @GetMapping("/listado")
-    public ResponseEntity<?> listado() {
+    @Override
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getOne(
+            @PathVariable String id) {
+
         try {
+
             return ResponseEntity.ok(
-                    service.obtenerListado()
+                    service.obtenerCartaDTO(id)
             );
+
         } catch (Exception e) {
+
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/listado")
+    public ResponseEntity<?> listado(
+            Pageable pageable) {
+
+        try {
+
+            return ResponseEntity.ok(
+                    service.obtenerListado(pageable)
+            );
+
+        } catch (Exception e) {
+
             return ResponseEntity.badRequest()
                     .body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/editar/{id}")
+    public ResponseEntity<?> editarCarta(
+            @PathVariable String id,
+            @RequestBody CartaDTO dto) throws Exception{
+
+        try {
+
+            return ResponseEntity.ok(
+                    service.editarCarta(id, dto)
+            );
+
+        } catch (Exception e) {
+
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}/activar")
+    public ResponseEntity<?> activarCarta(
+            @PathVariable String id) {
+
+        try {
+            service.activarCarta(id);
+            return ResponseEntity.ok(
+                    Map.of("mensaje", "Carta activada correctamente"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 }

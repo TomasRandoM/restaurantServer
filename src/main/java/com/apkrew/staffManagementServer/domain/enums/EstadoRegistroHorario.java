@@ -2,5 +2,7 @@ package com.apkrew.staffManagementServer.domain.enums;
 
 public enum EstadoRegistroHorario {
     AUSENTE,
-    PRESENTE
+    PRESENTE,
+    RETIRADO,
+    SALIDA_NO_REGISTRADA
 }

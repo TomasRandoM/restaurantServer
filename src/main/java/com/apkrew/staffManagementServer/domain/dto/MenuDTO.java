@@ -5,15 +5,15 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class CategoriaDTO {
+public class MenuDTO {
 
     private String id;
 
     private String nombre;
 
-    private int orden;
+    private String descripcion;
 
-    private List<ArticuloCartaDTO> productos;
+    private double precio;
 
-    private List<MenuCartaDTO> menus;
+    private List<MenuDetalleDTO> detalles;
 }
