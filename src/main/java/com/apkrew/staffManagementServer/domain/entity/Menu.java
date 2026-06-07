@@ -1,6 +1,7 @@
 package com.apkrew.staffManagementServer.domain.entity;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import lombok.*;
@@ -18,6 +19,9 @@ import java.util.List;
 public class Menu extends Base {
 
     private String nombre;
+
+    @Column(columnDefinition = "TEXT")
+    private String descripcion;
 
     private double precio;
 
