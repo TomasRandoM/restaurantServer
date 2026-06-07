@@ -11,6 +11,8 @@ public class CategoriaDTO {
 
     private String nombre;
 
+    private int orden;
+
     private List<ArticuloCartaDTO> productos;
 
     private List<MenuCartaDTO> menus;

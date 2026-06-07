@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -245,6 +246,8 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
             categoriaDTO.setNombre(
                     seccion.getCategoria().getNombre());
 
+            categoriaDTO.setOrden(seccion.getOrden());
+
             List<ArticuloCartaDTO> productos =
                     new ArrayList<>();
 
@@ -299,6 +302,9 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
 
         dto.setCategorias(categorias);
 
+        dto.getCategorias().sort(
+                Comparator.comparingInt(CategoriaDTO::getOrden));
+
         return dto;
     }
 
@@ -344,6 +350,7 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
             SeccionCarta seccion = new SeccionCarta();
             seccion.setCategoria(categoria);
             seccion.setCarta(carta);
+            seccion.setOrden(categoriaDTO.getOrden());
 
             List<DetalleSeccionCarta> detalles = new ArrayList<>();
 
