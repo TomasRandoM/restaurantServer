@@ -1,7 +1,6 @@
 package com.apkrew.staffManagementServer.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,6 +27,11 @@ public class Articulo extends Base{
     @ManyToOne
     @JoinColumn(name = "unidad_de_medida_id")
     private UnidadDeMedida unidadDeMedida;
+
+    @ManyToOne
+    @JoinColumn(name = "imagen_id")
+    @JsonIgnoreProperties({"contenido"})
+    private Imagen imagen;
 
     @OneToMany(mappedBy = "articulo")
     @JsonIgnoreProperties("articulo")
