@@ -35,7 +35,7 @@ public class RegistroHorarioServiceImpl extends BaseServiceImpl<RegistroHorario,
         this.empleadoService = empleadoService;
     }
 
-    @Scheduled(cron = "0 07 17 * * *")
+    @Scheduled(cron = "0 28 21 * * *")
     protected void createRegisters() throws ErrorServiceException {
         try {
             // Nuevo estado por si algún empleado no marca su salida (PERO si su entrada)
