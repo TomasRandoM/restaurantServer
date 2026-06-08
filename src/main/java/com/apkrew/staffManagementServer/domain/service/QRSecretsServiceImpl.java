@@ -28,7 +28,7 @@ public class QRSecretsServiceImpl implements QRSecretsService {
         return false;
     }
 
-    @Scheduled(cron = "0 0 3 ? * SUN")
+    @Scheduled(cron = "0 0 4 ? * SUN")
     private void updateQRKey() {
         List<QRSecrets> qrSecrets = qrSecretsRepository.findByEliminadoFalse();
         QRSecrets qrSecrets1;
