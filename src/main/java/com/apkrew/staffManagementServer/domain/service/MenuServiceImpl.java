@@ -3,7 +3,9 @@ package com.apkrew.staffManagementServer.domain.service;
 import com.apkrew.staffManagementServer.domain.dto.MenuDetalleDTO;
 import com.apkrew.staffManagementServer.domain.dto.MenuDTO;
 import com.apkrew.staffManagementServer.domain.dto.MenuListadoDTO;
+import com.apkrew.staffManagementServer.domain.dto.MenuRequestDTO;
 import com.apkrew.staffManagementServer.domain.entity.*;
+import com.apkrew.staffManagementServer.domain.enums.TipoImagen;
 import com.apkrew.staffManagementServer.domain.repository.BaseRepository;
 import com.apkrew.staffManagementServer.domain.repository.MenuRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
@@ -11,7 +13,9 @@ import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,15 +26,18 @@ public class MenuServiceImpl
 
     private final MenuRepository menuRepository;
     private final ArticuloService articuloService;
+    private final ImageServiceImpl imageService;
 
     public MenuServiceImpl(
             BaseRepository<Menu, String> baserepository,
             MenuRepository menuRepository,
-            ArticuloService articuloService) {
+            ArticuloService articuloService,
+            ImageServiceImpl imageService) {
 
         super(baserepository);
         this.menuRepository = menuRepository;
         this.articuloService = articuloService;
+        this.imageService = imageService;
     }
 
     @Override
@@ -100,30 +107,41 @@ public class MenuServiceImpl
         dto.setNombre(m.getNombre());
         dto.setDescripcion(m.getDescripcion());
         dto.setPrecio(m.getPrecio());
+        if (m.getImagen() != null) {
+            dto.setImagenId(m.getImagen().getId());
+        }
         return dto;
     }
 
     @Override
     @Transactional
-    public Menu crearMenu(MenuDTO dto) throws Exception {
-
+    public Menu crearMenu(MenuRequestDTO request, MultipartFile imagen) throws Exception {
         Menu menu = new Menu();
-        cargarDatosMenu(menu, dto);
-        menu.setDetalles(construirDetalles(menu, dto.getDetalles()));
+        menu.setNombre(request.getNombre());
+        menu.setDescripcion(request.getDescripcion());
+        menu.setPrecio(request.getPrecio());
+        menu.setDetalles(construirDetalles(menu, request.getDetalles()));
+
+        if (imagen != null && !imagen.isEmpty()) {
+            menu.setImagen(guardarImagen(imagen));
+        }
+
         return save(menu);
     }
 
     @Override
     @Transactional
-    public Menu editarMenu(String id, MenuDTO dto) throws Exception {
+    public Menu editarMenu(String id, MenuRequestDTO request, MultipartFile imagen) throws Exception {
 
         Menu menu = findById(id);
-        cargarDatosMenu(menu, dto);
+        menu.setNombre(request.getNombre());
+        menu.setDescripcion(request.getDescripcion());
+        menu.setPrecio(request.getPrecio());
 
         validar(menu, "UPDATE");
 
         List<DetalleMenu> nuevosDetalles =
-                construirDetalles(menu, dto.getDetalles());
+                construirDetalles(menu, request.getDetalles());
 
         if (menu.getDetalles() == null) {
             menu.setDetalles(new ArrayList<>());
@@ -132,7 +150,20 @@ public class MenuServiceImpl
         }
         menu.getDetalles().addAll(nuevosDetalles);
 
+        if (imagen != null && !imagen.isEmpty()) {
+            menu.setImagen(guardarImagen(imagen));
+        }
+
         return menuRepository.save(menu);
+    }
+
+    private Imagen guardarImagen(MultipartFile file) throws IOException, Exception {
+        Imagen img = new Imagen();
+        img.setNombre(file.getOriginalFilename());
+        img.setMime(file.getContentType());
+        img.setContenido(file.getBytes());
+        img.setTipoImagen(TipoImagen.PRODUCTO);
+        return imageService.save(img);
     }
 
     @Override
@@ -143,7 +174,7 @@ public class MenuServiceImpl
 
         if (menu.isEliminado()) {
             throw new ErrorServiceException(
-                    "El menú ya fue eliminado");
+                    "El menu ya fue eliminado");
         }
 
         menu.setEliminado(true);
@@ -157,14 +188,6 @@ public class MenuServiceImpl
         menuRepository.save(menu);
 
         return true;
-    }
-
-    private void cargarDatosMenu(Menu menu, MenuDTO dto)
-            throws ErrorServiceException {
-
-        menu.setNombre(dto.getNombre());
-        menu.setDescripcion(dto.getDescripcion());
-        menu.setPrecio(dto.getPrecio());
     }
 
     private List<DetalleMenu> construirDetalles(
@@ -206,6 +229,9 @@ public class MenuServiceImpl
         dto.setNombre(menu.getNombre());
         dto.setDescripcion(menu.getDescripcion());
         dto.setPrecio(menu.getPrecio());
+        if (menu.getImagen() != null) {
+            dto.setImagenId(menu.getImagen().getId());
+        }
 
         List<MenuDetalleDTO> detalles = new ArrayList<>();
 

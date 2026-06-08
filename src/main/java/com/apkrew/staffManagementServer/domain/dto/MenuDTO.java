@@ -16,4 +16,6 @@ public class MenuDTO {
     private double precio;
 
     private List<MenuDetalleDTO> detalles;
+
+    private String imagenId;
 }
