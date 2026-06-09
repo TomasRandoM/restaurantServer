@@ -72,6 +72,60 @@ public class ClienteServiceImpl extends BaseServiceImpl<Cliente, String> impleme
         }
     }
 
+    @Transactional
+    public Cliente editarCliente(ClienteRequestDTO dto, String id) throws ErrorServiceException {
+        try {
+
+            Direccion direccion = null;
+            if(dto.getDireccionId() != null && !dto.getDireccionId().isBlank()) {
+                direccion = direccionService.findById(dto.getDireccionId());
+            }
+
+
+            Cliente cliente = clienteRepository.findById(id)
+                    .orElseThrow(() -> new ErrorServiceException("Cliente no encontrado"));
+            cliente.setNombre(dto.getNombre());
+            cliente.setApellido(dto.getApellido());
+            cliente.setTipoDocumentacion(dto.getTipoDocumentacion());
+            cliente.setDni(dto.getDni());
+            cliente.setFechaNacimiento(dto.getFechaNacimiento());
+            cliente.setDireccion(direccion);
+            cliente.setDireccionEstadia(dto.getDireccionEstadia());
+
+            ContactoTelefonico contacto =
+                    cliente.getContacto()
+                            .stream()
+                            .filter(c -> c instanceof ContactoTelefonico)
+                            .map(c -> (ContactoTelefonico)c)
+                            .findFirst()
+                            .orElse(null);
+
+            if (contacto == null) {
+                contacto = new ContactoTelefonico();
+                cliente.addContacto(contacto);
+            }
+
+            contacto.setTelefono(dto.getContactoTelefono());
+            contacto.setTipoContacto(dto.getTipoContacto());
+            contacto.setObservacion(dto.getObservacion());
+            contacto.setTipoTelefono(dto.getTipoTelefono());
+
+            contactoTelefonicoService.save(contacto);
+
+            validar(cliente, "EDIT");
+
+            cliente = clienteRepository.save(cliente);
+
+            return cliente;
+
+        } catch (ErrorServiceException ex) {
+            ex.printStackTrace();
+            throw ex;
+        } catch (Exception ex) {
+            throw new ErrorServiceException("Error de sistemas en cliente");
+        }
+    }
+
     @Override
     public boolean validar(Cliente entity, String caso) throws Exception {
         try {
