@@ -48,7 +48,7 @@ public class RegistroHorarioServiceImpl extends BaseServiceImpl<RegistroHorario,
             List<Empleado> empleados = empleadoService.findAll();
             RegistroHorario registroHorario;
             Date today = Date.from(
-                    LocalDate.now()
+                    LocalDate.now(ZoneId.of("America/Argentina/Mendoza"))
                             .atTime(LocalTime.MAX)
                             .atZone(ZoneId.of("America/Argentina/Mendoza"))
                             .toInstant()
@@ -166,6 +166,23 @@ public class RegistroHorarioServiceImpl extends BaseServiceImpl<RegistroHorario,
         }
     }
 
+    public RegistroHorario findByFechaAndEmployeeId(Date fecha, String employeeId) throws ErrorServiceException {
+        ZoneId zona = ZoneId.of("America/Argentina/Mendoza");
+        LocalDate dia = fecha.toInstant().atZone(zona).toLocalDate();
+        Date desde = Date.from(dia.atTime(23, 59, 0).atZone(zona).toInstant());
+        Date hasta = Date.from(dia.plusDays(1).atTime(0, 0, 1).atZone(zona).toInstant());
+
+        List<RegistroHorario> encontrados = registroHorarioRepository
+                .findByEmpleadoIdAndFechaSalidaBetweenAndEliminadoFalse(employeeId, desde, hasta);
+
+        if (encontrados.size() == 1) {
+            return encontrados.get(0);
+        }
+        if (encontrados.isEmpty()) {
+            throw new ErrorServiceException("No existe un registro horario asociado para este día o no estuvo ausente.");
+        }
+        throw new ErrorServiceException("Se encontraron múltiples registros para este empleado en el día indicado.");
+    }
     @Override
     public boolean validar(RegistroHorario entity, String caso) throws Exception {
         try {
