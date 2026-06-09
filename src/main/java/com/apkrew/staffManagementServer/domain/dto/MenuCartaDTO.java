@@ -3,7 +3,7 @@ package com.apkrew.staffManagementServer.domain.dto;
 import lombok.Data;
 
 @Data
-public class ArticuloCartaDTO {
+public class MenuCartaDTO {
 
     private String id;
 

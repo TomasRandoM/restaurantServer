@@ -33,13 +33,14 @@ public class WebSecurityConfig {
 
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                //.cors(cors -> {})
                 .csrf((csrf) -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .securityMatcher("/**")
                 .authorizeHttpRequests(registry -> registry
                         .requestMatchers("/").permitAll()
                         .requestMatchers("/login").permitAll()
+                        .requestMatchers("/api/v1/carta/activa").permitAll()
+                        .requestMatchers("/api/v1/imagen/**").permitAll()
                         .anyRequest().authenticated()
                 );
         return http.build();

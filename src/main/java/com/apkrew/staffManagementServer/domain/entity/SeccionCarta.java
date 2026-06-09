@@ -33,4 +33,6 @@ public class SeccionCarta extends Base {
     @JsonIgnoreProperties("seccionCarta")
     private List<DetalleSeccionCarta> detalles;
 
+    private int orden;
+
 }

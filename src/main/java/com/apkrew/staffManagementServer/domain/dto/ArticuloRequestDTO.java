@@ -3,15 +3,10 @@ package com.apkrew.staffManagementServer.domain.dto;
 import lombok.Data;
 
 @Data
-public class ArticuloCartaDTO {
-
-    private String id;
-
+public class ArticuloRequestDTO {
     private String nombre;
-
     private String descripcion;
-
-    private double precio;
-
-    private String imagenId;
+    private boolean sinTAC;
+    private boolean esIngrediente;
+    private String unidadDeMedida;
 }
