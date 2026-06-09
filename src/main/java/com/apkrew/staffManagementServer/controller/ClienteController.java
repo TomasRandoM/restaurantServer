@@ -32,4 +32,19 @@ public class ClienteController extends BaseControllerImpl<Cliente, ClienteServic
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"Error. Por favor intente más tarde.\"}");
         }
     }
+
+    @PutMapping(value = "/editar/{id}")
+    public ResponseEntity<?> editarCliente(
+            @PathVariable String id,
+            @RequestBody ClienteRequestDTO dto) {
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(service.editarCliente(dto, id));
+        } catch (ErrorServiceException ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"error\":\"" + ex.getMessage() + "\"}");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"Error. Por favor intente más tarde.\"}");
+        }
+    }
 }
