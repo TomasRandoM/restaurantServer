@@ -10,6 +10,8 @@ import com.apkrew.staffManagementServer.domain.enums.EstadoDetalleComanda;
 import com.apkrew.staffManagementServer.domain.enums.EstadoFactura;
 import com.apkrew.staffManagementServer.domain.repository.BaseRepository;
 import com.apkrew.staffManagementServer.domain.repository.ComandaRepository;
+import com.apkrew.staffManagementServer.domain.repository.DetalleSeccionCartaArticuloIndividualRepository;
+import com.apkrew.staffManagementServer.domain.repository.DetalleSeccionCartaMenuRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -17,12 +19,14 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> implements ComandaService {
 
     private final ComandaRepository comandaRepository;
-    private final DetalleSeccionCartaService detalleSeccionCartaService;
+    private final DetalleSeccionCartaArticuloIndividualRepository articuloIndividualRepository;
+    private final DetalleSeccionCartaMenuRepository detalleSeccionCartaMenuRepository;
     private final FacturaService facturaService;
     private final DetalleFacturaService detalleFacturaService;
     private final FormaDePagoService formaDePagoService;
@@ -31,14 +35,16 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
     public ComandaServiceImpl(
             BaseRepository<Comanda, String> baseRepository,
             ComandaRepository comandaRepository,
-            DetalleSeccionCartaService detalleSeccionCartaService,
+            DetalleSeccionCartaArticuloIndividualRepository articuloIndividualRepository,
+            DetalleSeccionCartaMenuRepository detalleSeccionCartaMenuRepository,
             FacturaService facturaService,
             DetalleFacturaService detalleFacturaService,
             FormaDePagoService formaDePagoService,
             PromocionService promocionService) {
         super(baseRepository);
         this.comandaRepository = comandaRepository;
-        this.detalleSeccionCartaService = detalleSeccionCartaService;
+        this.articuloIndividualRepository = articuloIndividualRepository;
+        this.detalleSeccionCartaMenuRepository = detalleSeccionCartaMenuRepository;
         this.facturaService = facturaService;
         this.detalleFacturaService = detalleFacturaService;
         this.formaDePagoService = formaDePagoService;
@@ -61,7 +67,7 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
 
         if (dto.getDetalles() != null) {
             for (DetalleComandaRequestDTO detalleDTO : dto.getDetalles()) {
-                DetalleSeccionCarta articuloInfo = detalleSeccionCartaService.findById(detalleDTO.getDetalleSeccionCartaId());
+                DetalleSeccionCarta articuloInfo = obtenerDetalleSeccionCarta(detalleDTO.getDetalleSeccionCartaId());
                 double precioUnitario = obtenerPrecio(articuloInfo);
 
                 DetalleComanda detalle = DetalleComanda.builder()
@@ -101,7 +107,7 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
 
         if (dto.getDetalles() != null) {
             for (DetalleComandaRequestDTO detalleDTO : dto.getDetalles()) {
-                DetalleSeccionCarta articuloInfo = detalleSeccionCartaService.findById(detalleDTO.getDetalleSeccionCartaId());
+                DetalleSeccionCarta articuloInfo = obtenerDetalleSeccionCarta(detalleDTO.getDetalleSeccionCartaId());
                 double precioUnitario = obtenerPrecio(articuloInfo);
 
                 DetalleComanda detalle = DetalleComanda.builder()
@@ -131,7 +137,7 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
             throw new ErrorServiceException("No se pueden agregar detalles a una comanda cerrada o anulada.");
         }
 
-        DetalleSeccionCarta articuloInfo = detalleSeccionCartaService.findById(detalleDto.getDetalleSeccionCartaId());
+        DetalleSeccionCarta articuloInfo = obtenerDetalleSeccionCarta(detalleDto.getDetalleSeccionCartaId());
         double precioUnitario = obtenerPrecio(articuloInfo);
 
         DetalleComanda detalle = DetalleComanda.builder()
@@ -271,9 +277,32 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
         }
     }
 
+    private DetalleSeccionCarta obtenerDetalleSeccionCarta(String id) throws ErrorServiceException {
+        DetalleSeccionCarta articuloInfo = articuloIndividualRepository.findByIdAndEliminadoFalse(id)
+                .map(x -> (DetalleSeccionCarta) x)
+                .orElse(null);
+
+        if (articuloInfo == null) {
+            articuloInfo = detalleSeccionCartaMenuRepository.findByIdAndEliminadoFalse(id)
+                    .map(x -> (DetalleSeccionCarta) x)
+                    .orElse(null);
+        }
+
+        if (articuloInfo == null) {
+            throw new ErrorServiceException("El detalle de la sección de la carta no existe.");
+        }
+        return articuloInfo;
+    }
+
     private double obtenerPrecio(DetalleSeccionCarta articuloInfo) throws ErrorServiceException {
         if (articuloInfo instanceof DetalleSeccionCartaArticuloIndividual) {
             return ((DetalleSeccionCartaArticuloIndividual) articuloInfo).getPrecio();
+        } else if (articuloInfo instanceof DetalleSeccionCartaMenu) {
+            List<Menu> menus = ((DetalleSeccionCartaMenu) articuloInfo).getMenus();
+            if (menus == null || menus.isEmpty()) {
+                throw new ErrorServiceException("El menú de la sección de la carta no contiene platos asociados.");
+            }
+            return menus.stream().mapToDouble(Menu::getPrecio).sum();
         } else {
             throw new ErrorServiceException("Detalle de sección de carta no soportado.");
         }
@@ -299,6 +328,13 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
                 String articuloNombre = "Artículo de Carta";
                 if (det.getDetalleSeccionCarta() instanceof DetalleSeccionCartaArticuloIndividual) {
                     articuloNombre = ((DetalleSeccionCartaArticuloIndividual) det.getDetalleSeccionCarta()).getArticulo().getNombre();
+                } else if (det.getDetalleSeccionCarta() instanceof DetalleSeccionCartaMenu) {
+                    List<Menu> menus = ((DetalleSeccionCartaMenu) det.getDetalleSeccionCarta()).getMenus();
+                    if (menus != null && !menus.isEmpty()) {
+                        articuloNombre = menus.stream()
+                                .map(Menu::getNombre)
+                                .collect(Collectors.joining(", "));
+                    }
                 }
 
                 DetalleComandaResponseDTO detDTO = DetalleComandaResponseDTO.builder()
