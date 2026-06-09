@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Date;
+
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping(path = "api/v1/justificacion")
@@ -29,6 +31,23 @@ public class JustificacionController extends BaseControllerImpl<Justificacion, J
         try {
             return ResponseEntity.status(HttpStatus.OK)
                     .body(service.crearJustificacion(registroHorarioId, tipoDocumentacion, observacion, archivo));
+        } catch (ErrorServiceException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"error\":\"" + ex.getMessage() + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"Error. Por favor intente más tarde.\"}");
+        }
+    }
+
+    @PostMapping(value = "/crearUsuario", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> crearJustificacionViaUsuario(
+            @RequestParam("fecha") Date fecha,
+            @RequestParam("employeeId") String employeeId,
+            @RequestParam("tipoDocumentacion") TipoJustificacion tipoDocumentacion,
+            @RequestParam(value = "observacion", required = false) String observacion,
+            @RequestPart("archivo") MultipartFile archivo) {
+        try {
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(service.crearJustificacionViaUsuario(fecha, employeeId, tipoDocumentacion, observacion, archivo));
         } catch (ErrorServiceException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"error\":\"" + ex.getMessage() + "\"}");
         } catch (Exception e) {
