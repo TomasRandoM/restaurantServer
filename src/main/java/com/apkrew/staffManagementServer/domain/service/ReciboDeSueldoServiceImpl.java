@@ -8,11 +8,18 @@ import com.apkrew.staffManagementServer.domain.entity.DetalleReciboDeSueldo;
 import com.apkrew.staffManagementServer.domain.entity.Empleado;
 import com.apkrew.staffManagementServer.domain.entity.ItemReciboDeSueldo;
 import com.apkrew.staffManagementServer.domain.entity.ReciboDeSueldo;
+import com.apkrew.staffManagementServer.domain.entity.Usuario;
 import com.apkrew.staffManagementServer.domain.repository.BaseRepository;
 import com.apkrew.staffManagementServer.domain.repository.ReciboDeSueldoRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+
+import com.apkrew.staffManagementServer.seguridad.UserPrincipal;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,17 +32,20 @@ public class ReciboDeSueldoServiceImpl
     private final ReciboDeSueldoRepository reciboDeSueldoRepository;
     private final EmpleadoService empleadoService;
     private final ItemReciboDeSueldoService itemReciboDeSueldoService;
+    private final UsuarioService usuarioService;
 
     public ReciboDeSueldoServiceImpl(
             BaseRepository<ReciboDeSueldo, String> baseRepository,
             ReciboDeSueldoRepository reciboDeSueldoRepository,
             EmpleadoService empleadoService,
-            ItemReciboDeSueldoService itemReciboDeSueldoService) {
+            ItemReciboDeSueldoService itemReciboDeSueldoService,
+            UsuarioService usuarioService) {
 
         super(baseRepository);
         this.reciboDeSueldoRepository = reciboDeSueldoRepository;
         this.empleadoService = empleadoService;
         this.itemReciboDeSueldoService = itemReciboDeSueldoService;
+        this.usuarioService = usuarioService;
     }
 
     @Override
@@ -298,6 +308,55 @@ public class ReciboDeSueldoServiceImpl
             return recibos.map(this::toResponseDTO);
         } catch (ErrorServiceException ex) {
             throw ex;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new ErrorServiceException("Error de sistemas");
+        }
+    }
+
+    @Override
+    @Transactional
+    public List<ReciboDeSueldoResponseDTO> findAllByEmpleadoId(String empleadoId)
+            throws Exception {
+
+        try {
+            List<ReciboDeSueldo> recibos = reciboDeSueldoRepository
+                    .findByEmpleadoIdAndEliminadoFalse(empleadoId);
+            List<ReciboDeSueldoResponseDTO> dtos = new ArrayList<>();
+            for (ReciboDeSueldo recibo : recibos) {
+                dtos.add(toResponseDTO(recibo));
+            }
+            return dtos;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new ErrorServiceException("Error de sistemas");
+        }
+    }
+
+    @Override
+    @Transactional
+    public Page<ReciboDeSueldoResponseDTO> findAllByEmpleadoId(String empleadoId, Pageable pageable)
+            throws Exception {
+
+        try {
+            Page<ReciboDeSueldo> recibos = reciboDeSueldoRepository
+                    .findByEmpleadoIdAndEliminadoFalse(empleadoId, pageable);
+            return recibos.map(this::toResponseDTO);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new ErrorServiceException("Error de sistemas");
+        }
+    }
+
+    @Override
+    public Page<ReciboDeSueldoResponseDTO> findAllForCurrentUser(Pageable pageable)
+            throws Exception {
+
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
+            Usuario usuario = usuarioService.findById(principal.getUserId());
+            return findAllByEmpleadoId(usuario.getPersona().getId(), pageable);
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new ErrorServiceException("Error de sistemas");
