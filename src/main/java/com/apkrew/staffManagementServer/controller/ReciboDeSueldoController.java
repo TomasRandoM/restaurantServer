@@ -105,6 +105,17 @@ public class ReciboDeSueldoController {
         }
     }
 
+    @GetMapping("/mis-recibos")
+    public ResponseEntity<?> getMisRecibos(Pageable pageable) {
+        try {
+            return ResponseEntity.ok(service.findAllForCurrentUser(pageable));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("{\"error\":\"Error. Por favor intente más tarde.\"}");
+        }
+    }
+
     @GetMapping("/calcularTotal/{id}")
     public ResponseEntity<?> calcularTotal(@PathVariable String id) {
         try {
