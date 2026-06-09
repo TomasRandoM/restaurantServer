@@ -1,13 +1,15 @@
 package com.apkrew.staffManagementServer.controller;
 
-import com.apkrew.staffManagementServer.domain.dto.MenuDTO;
+import com.apkrew.staffManagementServer.domain.dto.MenuRequestDTO;
 import com.apkrew.staffManagementServer.domain.entity.Menu;
 import com.apkrew.staffManagementServer.domain.service.MenuServiceImpl;
+import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -19,13 +21,18 @@ public class MenuController
         super(service);
     }
 
-    @PostMapping("/crear")
-    public ResponseEntity<?> crearMenu(@RequestBody MenuDTO dto) {
+    @PostMapping(value = "/crear", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> crearMenu(
+            @ModelAttribute MenuRequestDTO dto,
+            @RequestPart(value = "imagen", required = false) MultipartFile imagen) {
         try {
-            return ResponseEntity.ok(service.crearMenu(dto));
+            return ResponseEntity.status(HttpStatus.OK).body(service.crearMenu(dto, imagen));
+        } catch (ErrorServiceException ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"error\":\"" + ex.getMessage() + "\"}");
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"Error. Por favor intente más tarde.\"}");
         }
     }
 
@@ -36,7 +43,7 @@ public class MenuController
             return ResponseEntity.ok(service.obtenerMenuDTO(id));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
+                    .body("{\"error\":\"" + e.getMessage() + "\"}");
         }
     }
 
@@ -46,7 +53,7 @@ public class MenuController
             return ResponseEntity.ok(service.obtenerListado(pageable));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
+                    .body("{\"error\":\"" + e.getMessage() + "\"}");
         }
     }
 
@@ -56,19 +63,24 @@ public class MenuController
             return ResponseEntity.ok(service.obtenerListado());
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
+                    .body("{\"error\":\"" + e.getMessage() + "\"}");
         }
     }
 
-    @PutMapping("/editar/{id}")
+    @PutMapping(value = "/editar/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> editarMenu(
             @PathVariable String id,
-            @RequestBody MenuDTO dto) {
+            @ModelAttribute MenuRequestDTO dto,
+            @RequestPart(value = "imagen", required = false) MultipartFile imagen) {
         try {
-            return ResponseEntity.ok(service.editarMenu(id, dto));
+            Menu menu = service.editarMenu(id, dto, imagen);
+            return ResponseEntity.status(HttpStatus.OK).body(menu);
+        } catch (ErrorServiceException ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"error\":\"" + ex.getMessage() + "\"}");
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"Error. Por favor intente más tarde.\"}");
         }
     }
 }

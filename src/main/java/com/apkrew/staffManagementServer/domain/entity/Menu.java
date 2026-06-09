@@ -1,9 +1,7 @@
 package com.apkrew.staffManagementServer.domain.entity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.envers.Audited;
 
@@ -31,4 +29,9 @@ public class Menu extends Base {
             orphanRemoval = true
     )
     private List<DetalleMenu> detalles;
+
+    @ManyToOne
+    @JoinColumn(name = "imagen_id")
+    @JsonIgnoreProperties({"contenido"})
+    private Imagen imagen;
 }

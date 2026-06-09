@@ -274,6 +274,11 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
                     producto.setPrecio(
                             ai.getPrecio());
 
+                    if (ai.getArticulo().getImagen() != null) {
+                        producto.setImagenId(
+                                ai.getArticulo().getImagen().getId());
+                    }
+
                     productos.add(producto);
 
                 } else if (detalle instanceof
@@ -289,6 +294,11 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
                         menuDTO.setNombre(menu.getNombre());
                         menuDTO.setDescripcion(menu.getDescripcion());
                         menuDTO.setPrecio(menu.getPrecio());
+
+                        if (menu.getImagen() != null) {
+                            menuDTO.setImagenId(
+                                    menu.getImagen().getId());
+                        }
 
                         menus.add(menuDTO);
                     }

@@ -2,10 +2,10 @@ package com.apkrew.staffManagementServer.domain.dto;
 
 import lombok.Data;
 
-@Data
-public class MenuListadoDTO {
+import java.util.List;
 
-    private String id;
+@Data
+public class MenuRequestDTO {
 
     private String nombre;
 
@@ -13,5 +13,5 @@ public class MenuListadoDTO {
 
     private double precio;
 
-    private String imagenId;
+    private List<MenuDetalleDTO> detalles;
 }
