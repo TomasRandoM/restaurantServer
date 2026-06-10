@@ -21,8 +21,21 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.Month;
+import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.properties.UnitValue;
+
+import java.io.ByteArrayOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 @Service
 public class ReciboDeSueldoServiceImpl
@@ -440,5 +453,118 @@ public class ReciboDeSueldoServiceImpl
         }
 
         return dto;
+    }
+
+    public byte[] generarPdf(String id) {
+
+        ReciboDeSueldo recibo = reciboDeSueldoRepository.findById(id).
+                orElseThrow(() -> new IllegalArgumentException("Recibo de sueldo no encontrado"));
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+
+            PdfWriter writer = new PdfWriter(baos);
+            PdfDocument pdf = new PdfDocument(writer);
+            Document document = new Document(pdf);
+
+            // Título
+            Paragraph titulo = new Paragraph("RECIBO DE SUELDO")
+                    .setFontSize(18);
+
+            document.add(titulo);
+
+            document.add(new Paragraph(" "));
+
+            // Datos empleado
+            document.add(new Paragraph(
+                    "Empleado: "
+                            + recibo.getEmpleado().getApellido()
+                            + ", "
+                            + recibo.getEmpleado().getNombre()));
+
+            document.add(new Paragraph(
+                    "DNI: "
+                            + recibo.getEmpleado().getDni()));
+
+            document.add(new Paragraph(
+                    "Cargo: "
+                            + recibo.getEmpleado().getTipoEmpleado()));
+
+            document.add(new Paragraph(
+                    "Fecha de pago: "
+                            + new SimpleDateFormat("dd/MM/yyyy")
+                            .format(recibo.getFechaDePago())));
+
+            String nombreMes = Month.of(recibo.getMesPago())
+                    .getDisplayName(TextStyle.FULL, new Locale("es", "AR"));
+
+            nombreMes = Character.toUpperCase(nombreMes.charAt(0))
+                    + nombreMes.substring(1);
+
+            document.add(new Paragraph(
+                    "Mes liquidado: " + nombreMes));
+
+            document.add(new Paragraph(" "));
+
+            // Tabla de conceptos
+            Table table = new Table(UnitValue.createPercentArray(
+                    new float[]{4, 2, 2, 2}))
+                    .useAllAvailableWidth();
+
+            table.addHeaderCell("Concepto");
+            table.addHeaderCell("Cantidad");
+            table.addHeaderCell("Valor");
+            table.addHeaderCell("Total");
+
+            for (DetalleReciboDeSueldo detalle : recibo.getDetalles()) {
+
+                double subtotal =
+                        detalle.getCantidad() * detalle.getValor();
+
+                table.addCell(
+                        detalle.getItemReciboDeSueldo().getNombre());
+
+                table.addCell(
+                        String.valueOf(detalle.getCantidad()));
+
+                table.addCell(
+                        String.format("$ %.2f",
+                                detalle.getValor()));
+
+                table.addCell(
+                        String.format("$ %.2f",
+                                subtotal));
+            }
+
+            document.add(table);
+
+            document.add(new Paragraph(" "));
+
+            document.add(
+                    new Paragraph(
+                            "Total a cobrar: $ "
+                                    + String.format("%.2f",
+                                    recibo.getTotalPago())));
+
+            if (recibo.getObservacion() != null &&
+                    !recibo.getObservacion().isBlank()) {
+
+                document.add(new Paragraph(" "));
+                document.add(
+                        new Paragraph("Observaciones:"));
+
+                document.add(
+                        new Paragraph(recibo.getObservacion()));
+            }
+
+            document.add(new Paragraph("\n\n"));
+
+            document.close();
+
+            return baos.toByteArray();
+
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Error al generar PDF", e);
+        }
     }
 }

@@ -4,7 +4,9 @@ import com.apkrew.staffManagementServer.domain.dto.ReciboDeSueldoRequestDTO;
 import com.apkrew.staffManagementServer.domain.service.ReciboDeSueldoServiceImpl;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -85,6 +87,21 @@ public class ReciboDeSueldoController {
         } catch (ErrorServiceException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("{\"error\":\"" + ex.getMessage() + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("{\"error\":\"Error. Por favor intente más tarde.\"}");
+        }
+    }
+
+    @GetMapping("/pdf/{id}")
+    public ResponseEntity<?> generatePdf(@PathVariable String id) {
+        try {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .header(
+                            HttpHeaders.CONTENT_DISPOSITION,
+                            "inline; filename=recibo-" + id + ".pdf")
+                    .body(service.generarPdf(id));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("{\"error\":\"Error. Por favor intente más tarde.\"}");
