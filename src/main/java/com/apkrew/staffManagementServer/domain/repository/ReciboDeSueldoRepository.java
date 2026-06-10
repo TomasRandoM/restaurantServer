@@ -11,4 +11,5 @@ import java.util.List;
 public interface ReciboDeSueldoRepository extends BaseRepository<ReciboDeSueldo, String> {
     List<ReciboDeSueldo> findByEmpleadoIdAndEliminadoFalse(String empleadoId);
     Page<ReciboDeSueldo> findByEmpleadoIdAndEliminadoFalse(String empleadoId, Pageable pageable);
+    ReciboDeSueldo findByEmpleadoIdAndMesPagoAndEliminadoFalse(String empleadoId, Integer mesPago);
 }

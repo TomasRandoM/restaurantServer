@@ -394,6 +394,11 @@ public class ReciboDeSueldoServiceImpl
                     "Debe indicar al menos un detalle");
         }
 
+        if (reciboDeSueldoRepository.findByEmpleadoIdAndMesPagoAndEliminadoFalse(dto.getEmpleadoId(), dto.getMesPago()) != null) {
+            throw new ErrorServiceException(
+                    "Ya existe un recibo de sueldo del empleado para el mes seleccionado.");
+        }
+
         for (int i = 0; i < dto.getDetalles().size(); i++) {
             DetalleRequestDTO det = dto.getDetalles().get(i);
 
