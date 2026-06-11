@@ -31,7 +31,10 @@ public class DetalleComandaServiceImpl extends BaseServiceImpl<DetalleComanda, S
         if (entity.getCantidad() <= 0) {
             throw new ErrorServiceException("La cantidad debe ser mayor a 0");
         }
-        if (entity.getDetalleSeccionCarta() == null || entity.getDetalleSeccionCarta().getId() == null) {
+        String cardId = entity.getDetalleSeccionCarta() != null ? 
+                entity.getDetalleSeccionCarta().getId() : 
+                entity.getDetalleSeccionCartaId();
+        if (cardId == null || cardId.isBlank()) {
             throw new ErrorServiceException("Debe especificar un artículo de la carta");
         }
         return true;

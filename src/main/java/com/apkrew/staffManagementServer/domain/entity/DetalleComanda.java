@@ -21,15 +21,20 @@ public class DetalleComanda extends Base {
     @Enumerated(EnumType.STRING)
     private EstadoDetalleComanda estadoDetalleComanda;
 
-    private double subtotal;
+    private Double subtotal;
 
     @ManyToOne
     @JoinColumn(name = "comanda_id")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Comanda comanda;
 
     @ManyToOne
     @JoinColumn(name = "detalle_seccion_carta_id")
     @JsonIgnoreProperties("seccionCarta")
     private DetalleSeccionCarta detalleSeccionCarta;
+
+    @jakarta.persistence.Transient
+    private String detalleSeccionCartaId;
 }

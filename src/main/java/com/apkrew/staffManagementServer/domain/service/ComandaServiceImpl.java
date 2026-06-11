@@ -1,5 +1,9 @@
 package com.apkrew.staffManagementServer.domain.service;
 
+import com.apkrew.staffManagementServer.domain.dto.ComandaResponseDTO;
+import com.apkrew.staffManagementServer.domain.dto.DetalleComandaResponseDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import com.apkrew.staffManagementServer.domain.entity.*;
 import com.apkrew.staffManagementServer.domain.enums.EstadoComanda;
 import com.apkrew.staffManagementServer.domain.enums.EstadoDetalleComanda;
@@ -50,36 +54,33 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
     @Transactional
     public Comanda save(Comanda entity) throws Exception {
         try {
-            validar(entity, "SAVE");
+            if (entity.getEstadoComanda() == null) {
+                entity.setEstadoComanda(EstadoComanda.ABIERTA);
+            }
+            if (entity.getFechaSolicitudComanda() == null) {
+                entity.setFechaSolicitudComanda(new Date());
+            }
 
-            Comanda comanda = Comanda.builder()
-                    .fechaSolicitudComanda(entity.getFechaSolicitudComanda() != null ? entity.getFechaSolicitudComanda() : new Date())
-                    .estadoComanda(entity.getEstadoComanda() != null ? entity.getEstadoComanda() : EstadoComanda.ABIERTA)
-                    .total(0.0)
-                    .detalles(new ArrayList<>())
-                    .build();
-
-            double total = 0.0;
             if (entity.getDetalles() != null) {
                 for (DetalleComanda det : entity.getDetalles()) {
-                    DetalleSeccionCarta articuloInfo = obtenerDetalleSeccionCarta(det.getDetalleSeccionCarta().getId());
-                    double precioUnitario = obtenerPrecio(articuloInfo);
+                    String cardId = det.getDetalleSeccionCarta() != null ? 
+                            det.getDetalleSeccionCarta().getId() : 
+                            det.getDetalleSeccionCartaId();
 
-                    DetalleComanda detalle = DetalleComanda.builder()
-                            .cantidad(det.getCantidad())
-                            .subtotal(precioUnitario * det.getCantidad())
-                            .estadoDetalleComanda(det.getEstadoDetalleComanda() != null ? det.getEstadoDetalleComanda() : EstadoDetalleComanda.EN_PROCESO_DE_SOLICITUD)
-                            .detalleSeccionCarta(articuloInfo)
-                            .comanda(comanda)
-                            .build();
+                    DetalleSeccionCarta articuloInfo = obtenerDetalleSeccionCarta(cardId);
+                    double precioUnitario = obtenerPrecio(articuloInfo); //ojo aca con error de stack overflow
 
-                    comanda.getDetalles().add(detalle);
-                    total += detalle.getSubtotal();
+                    det.setDetalleSeccionCarta(articuloInfo);
+                    det.setSubtotal(precioUnitario * det.getCantidad());
+                    if (det.getEstadoDetalleComanda() == null) {
+                        det.setEstadoDetalleComanda(EstadoDetalleComanda.EN_PROCESO_DE_SOLICITUD);
+                    }
+                    det.setComanda(entity);
                 }
             }
-            comanda.setTotal(total);
 
-            return comandaRepository.save(comanda);
+            validar(entity, "SAVE");
+            return comandaRepository.save(entity);  //aca larga el error
         } catch (ErrorServiceException ex) {
             throw ex;
         } catch (Exception e) {
@@ -92,6 +93,17 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
     @Transactional
     public Comanda update(String id, Comanda entity) throws Exception {
         try {
+            // Pre-resolve card IDs so validation works correctly
+            if (entity.getDetalles() != null) {
+                for (DetalleComanda det : entity.getDetalles()) {
+                    String cardId = det.getDetalleSeccionCarta() != null ? 
+                            det.getDetalleSeccionCarta().getId() : 
+                            det.getDetalleSeccionCartaId();
+                    DetalleSeccionCarta articuloInfo = obtenerDetalleSeccionCarta(cardId);
+                    det.setDetalleSeccionCarta(articuloInfo);
+                }
+            }
+
             validar(entity, "UPDATE");
             Comanda comandaAModificar = comandaRepository.findByIdAndEliminadoFalse(id)
                     .orElseThrow(() -> new ErrorServiceException("La comanda no existe"));
@@ -109,10 +121,12 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
             // Clear details safely to trigger orphan removal
             comandaAModificar.getDetalles().clear();
 
-            double total = 0.0;
             if (entity.getDetalles() != null) {
                 for (DetalleComanda det : entity.getDetalles()) {
-                    DetalleSeccionCarta articuloInfo = obtenerDetalleSeccionCarta(det.getDetalleSeccionCarta().getId());
+                    String cardId = det.getDetalleSeccionCarta() != null ? 
+                            det.getDetalleSeccionCarta().getId() : 
+                            det.getDetalleSeccionCartaId();
+                    DetalleSeccionCarta articuloInfo = obtenerDetalleSeccionCarta(cardId);
                     double precioUnitario = obtenerPrecio(articuloInfo);
 
                     DetalleComanda detalle = DetalleComanda.builder()
@@ -124,10 +138,8 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
                             .build();
 
                     comandaAModificar.getDetalles().add(detalle);
-                    total += detalle.getSubtotal();
                 }
             }
-            comandaAModificar.setTotal(total);
 
             return comandaRepository.save(comandaAModificar); //guardo la comanda con los datos cambiados
         } catch (ErrorServiceException ex) {
@@ -183,19 +195,32 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
             promocion = promocionService.findById(promocionId);
         }
 
+        double totalComanda = 0.0;
+        if (comanda.getDetalles() != null) {
+            totalComanda = comanda.getDetalles().stream()
+                    .filter(d -> !d.isEliminado() && d.getSubtotal() != null)
+                    .mapToDouble(DetalleComanda::getSubtotal)
+                    .sum();
+        }
+
+        if (promocion != null) {
+            totalComanda = totalComanda * (1.0 - (promocion.getPorcentajeDescuento() / 100.0));
+        }
+
         Factura factura = new Factura();
-        factura.setNumeroFactura(System.currentTimeMillis());
+        factura.setNumeroFactura(System.currentTimeMillis()); //a cambiar por el metodo de generacion correspondiente
         factura.setFechaFactura(new Date());
-        factura.setTotalPagado(comanda.getTotal());
+        factura.setTotalPagado(totalComanda);
         factura.setEstado(EstadoFactura.PAGADA);
         factura.setFormaPago(formaPago);
         factura.setPromocion(promocion);
 
         List<DetalleFactura> detallesFactura = new ArrayList<>();
         for (DetalleComanda detComanda : comanda.getDetalles()) {
+            if (detComanda.isEliminado()) continue;
             DetalleFactura detFactura = new DetalleFactura();
             detFactura.setCantidad(detComanda.getCantidad());
-            detFactura.setSubtotal(detComanda.getSubtotal());
+            detFactura.setSubtotal(detComanda.getSubtotal() != null ? detComanda.getSubtotal() : 0.0);
             detFactura.setFactura(factura);
             detallesFactura.add(detFactura);
         }
@@ -259,7 +284,10 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
                 if (det.getCantidad() <= 0) {
                     throw new ErrorServiceException("La cantidad de los detalles debe ser mayor a 0");
                 }
-                if (det.getDetalleSeccionCarta() == null || det.getDetalleSeccionCarta().getId() == null || det.getDetalleSeccionCarta().getId().isBlank()) {
+                String cardId = det.getDetalleSeccionCarta() != null ? 
+                        det.getDetalleSeccionCarta().getId() : 
+                        det.getDetalleSeccionCartaId();
+                if (cardId == null || cardId.isBlank()) {
                     throw new ErrorServiceException("Debe especificar un artículo válido para el detalle");
                 }
             }
@@ -271,7 +299,7 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
 
     private DetalleSeccionCarta obtenerDetalleSeccionCarta(String id) throws ErrorServiceException {
         DetalleSeccionCarta articuloInfo = articuloIndividualRepository.findByIdAndEliminadoFalse(id)
-                .map(x -> (DetalleSeccionCarta) x)
+                .map(x -> (DetalleSeccionCarta) x) // ojo aca, que paso?
                 .orElse(null);
 
         if (articuloInfo == null) {
@@ -298,5 +326,81 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
         } else {
             throw new ErrorServiceException("Detalle de sección de carta no soportado.");
         }
+    }
+
+    @Override
+    public ComandaResponseDTO obtenerComandaDTO(String id) throws Exception {
+        Comanda comanda = findById(id);
+        if (comanda == null) {
+            throw new ErrorServiceException("La comanda no existe");
+        }
+        return convertToResponseDTO(comanda);
+    }
+
+    @Override
+    public Page<ComandaResponseDTO> obtenerComandasDTO(Pageable pageable) throws Exception {
+        Page<Comanda> comandas = findAll(pageable);
+        return comandas.map(this::convertToResponseDTO);
+    }
+
+    @Override
+    public List<ComandaResponseDTO> obtenerComandasDTO() throws Exception {
+        List<Comanda> comandas = findAll();
+        List<ComandaResponseDTO> dtos = new ArrayList<>();
+        for (Comanda c : comandas) {
+            dtos.add(convertToResponseDTO(c));
+        }
+        return dtos;
+    }
+
+    @Override
+    public ComandaResponseDTO convertToResponseDTO(Comanda comanda) {
+        if (comanda == null) return null;
+
+        List<DetalleComandaResponseDTO> detallesDTO = new ArrayList<>();
+        double totalComanda = 0.0;
+        if (comanda.getDetalles() != null) {
+            for (DetalleComanda det : comanda.getDetalles()) {
+                if (det.isEliminado()) continue;
+
+                String articuloNombre = "";
+                if (det.getDetalleSeccionCarta() != null) {
+                    DetalleSeccionCarta sc = det.getDetalleSeccionCarta();
+                    if (sc instanceof DetalleSeccionCartaArticuloIndividual ai && ai.getArticulo() != null) {
+                        articuloNombre = ai.getArticulo().getNombre();
+                    } else if (sc instanceof DetalleSeccionCartaMenu dscm && dscm.getMenus() != null && !dscm.getMenus().isEmpty()) {
+                        List<String> nombres = new ArrayList<>();
+                        for (Menu m : dscm.getMenus()) {
+                            nombres.add(m.getNombre());
+                        }
+                        articuloNombre = String.join(", ", nombres);
+                    }
+                }
+
+                double sub = det.getSubtotal() != null ? det.getSubtotal() : 0.0;
+                totalComanda += sub;
+
+                DetalleComandaResponseDTO detDTO = DetalleComandaResponseDTO.builder()
+                        .id(det.getId())
+                        .cantidad(det.getCantidad())
+                        .estadoDetalleComanda(det.getEstadoDetalleComanda())
+                        .subtotal(sub)
+                        .detalleSeccionCartaId(det.getDetalleSeccionCarta() != null ? det.getDetalleSeccionCarta().getId() : null)
+                        .articuloNombre(articuloNombre)
+                        .build();
+                detallesDTO.add(detDTO);
+            }
+        }
+
+        return ComandaResponseDTO.builder()
+                .id(comanda.getId())
+                .fechaSolicitudComanda(comanda.getFechaSolicitudComanda())
+                .fechaEntregaComanda(comanda.getFechaEntregaComanda())
+                .estadoComanda(comanda.getEstadoComanda())
+                .total(totalComanda)
+                .detalles(detallesDTO)
+                .facturaId(comanda.getFactura() != null ? comanda.getFactura().getId() : null)
+                .facturaNumero(comanda.getFactura() != null ? comanda.getFactura().getNumeroFactura() : null)
+                .build();
     }
 }

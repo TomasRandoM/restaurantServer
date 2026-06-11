@@ -34,11 +34,11 @@ public class Comanda extends Base {
 //    @JoinColumn(name = "cliente_id")
 //    private Cliente cliente;
 
-    private double total;
-
     @Builder.Default
     @OneToMany(mappedBy = "comanda", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("comanda")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<DetalleComanda> detalles = new ArrayList<>();
 
     @NotAudited
