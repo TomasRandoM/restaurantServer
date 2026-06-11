@@ -200,4 +200,8 @@ public class ClienteServiceImpl extends BaseServiceImpl<Cliente, String> impleme
             throw new ErrorServiceException("Error de sistemas");
         }
     }
+
+    public int contarClientesActivos() {
+        return clienteRepository.findByEliminadoFalse().size();
+    }
 }
