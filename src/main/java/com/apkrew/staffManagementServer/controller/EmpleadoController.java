@@ -22,7 +22,7 @@ public class EmpleadoController extends BaseControllerImpl<Empleado, EmpleadoSer
     @PostMapping(value = "/crear", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> crearEmpleado(
             @ModelAttribute EmpleadoRequestDTO dto,
-            @RequestPart("foto") MultipartFile foto) {
+            @RequestPart(value = "foto", required = false) MultipartFile foto) {
         try {
             return ResponseEntity.status(HttpStatus.OK).body(service.crearEmpleado(dto, foto));
         } catch (ErrorServiceException ex) {

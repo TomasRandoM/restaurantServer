@@ -43,12 +43,15 @@ public class EmpleadoServiceImpl extends BaseServiceImpl<Empleado, String> imple
 
             Direccion direccion = direccionService.findById(dto.getDireccionId());
 
-            Imagen imagen = new Imagen();
-            imagen.setNombre(foto.getOriginalFilename());
-            imagen.setMime(foto.getContentType());
-            imagen.setContenido(foto.getBytes());
-            imagen.setTipoImagen(TipoImagen.PERSONA);
-            imagen = imageService.save(imagen);
+            Imagen imagen = null;
+            if (foto != null) {
+                imagen = new Imagen();
+                imagen.setNombre(foto.getOriginalFilename());
+                imagen.setMime(foto.getContentType());
+                imagen.setContenido(foto.getBytes());
+                imagen.setTipoImagen(TipoImagen.PERSONA);
+                imagen = imageService.save(imagen);
+            }
 
             Empleado empleado = new Empleado();
             empleado.setNombre(dto.getNombre());
@@ -58,8 +61,9 @@ public class EmpleadoServiceImpl extends BaseServiceImpl<Empleado, String> imple
             empleado.setFechaNacimiento(dto.getFechaNacimiento());
             empleado.setTipoEmpleado(dto.getTipoEmpleado());
             empleado.setDireccion(direccion);
-            empleado.setImagen(imagen);
-
+            if (foto != null) {
+                empleado.setImagen(imagen);
+            }
             ContactoCorreoElectronico contactoCorreoElectronico = new ContactoCorreoElectronico();
             contactoCorreoElectronico.setEmail(dto.getEmail());
             contactoCorreoElectronico.setTipoContacto(dto.getTipoContacto());
@@ -175,10 +179,6 @@ public class EmpleadoServiceImpl extends BaseServiceImpl<Empleado, String> imple
 
             if (entity.getDireccion() == null || entity.getDireccion().getId() == null) {
                 throw new ErrorServiceException("Debe indicar la dirección");
-            }
-
-            if (entity.getImagen() == null || entity.getImagen().getId() == null) {
-                throw new ErrorServiceException("Debe indicar la imagen");
             }
 
             if (entity.getContacto() == null || entity.getContacto().isEmpty()) {
