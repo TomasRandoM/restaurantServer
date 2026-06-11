@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 @Builder
 public class DetalleComandaResponseDTO {
     private String id;
-    private Integer cantidad;
+    private int cantidad;
     private EstadoDetalleComanda estadoDetalleComanda;
-    private Double subtotal;
+    private double subtotal;
     private String detalleSeccionCartaId;
     private String articuloNombre;
 }

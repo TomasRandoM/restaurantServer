@@ -21,7 +21,7 @@ public class DetalleComanda extends Base {
     @Enumerated(EnumType.STRING)
     private EstadoDetalleComanda estadoDetalleComanda;
 
-    private Double subtotal;
+    private double subtotal;
 
     @ManyToOne
     @JoinColumn(name = "comanda_id")

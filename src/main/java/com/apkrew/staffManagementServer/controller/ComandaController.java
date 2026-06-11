@@ -79,18 +79,7 @@ public class ComandaController extends BaseControllerImpl<Comanda, ComandaServic
         }
     }
 
-    @PostMapping("/{id}/facturar")
-    public ResponseEntity<?> facturarComanda(
-            @PathVariable String id,
-            @RequestParam String formaPagoId,
-            @RequestParam(required = false) String promocionId) {
-        try {
-            return ResponseEntity.status(HttpStatus.OK).body(service.convertToResponseDTO(service.facturarComanda(id, formaPagoId, promocionId)));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"error\":\"" + e.getMessage() + "\"}");
-        }
-    }
-
+    ///estos 3 especificamente son para modificar el estado de la comanda
     @PutMapping("/{id}/entregar")
     public ResponseEntity<?> entregarComanda(@PathVariable String id) {
         try {

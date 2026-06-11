@@ -7,7 +7,6 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface ComandaService extends BaseService<Comanda, String> {
-    Comanda facturarComanda(String comandaId, String formaPagoId, String promocionId) throws Exception;
     Comanda entregarComanda(String comandaId) throws Exception;
     Comanda marcarEntregaFallida(String comandaId) throws Exception;
     Comanda anularComanda(String comandaId) throws Exception;
