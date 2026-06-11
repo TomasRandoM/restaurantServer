@@ -14,4 +14,5 @@ public interface RegistroHorarioRepository extends BaseRepository<RegistroHorari
     Optional<RegistroHorario> findFirstByEmpleadoIdAndEstadoRegistroHorarioAndEliminadoFalseOrderByFechaSalidaDesc(String empleadoId, EstadoRegistroHorario estado);
     List<RegistroHorario> findAllByEstadoRegistroHorarioAndEliminadoFalse(EstadoRegistroHorario estado);
     List<RegistroHorario> findByEmpleadoIdAndFechaSalidaBetweenAndEliminadoFalse(String empleadoId, Date desde, Date hasta);
+    Optional<RegistroHorario> findByEmpleadoIdAndFechaSalidaAndEliminadoFalse(String empleadoId, Date fecha);
 }

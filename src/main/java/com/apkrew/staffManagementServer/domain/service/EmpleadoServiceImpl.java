@@ -253,4 +253,8 @@ public class EmpleadoServiceImpl extends BaseServiceImpl<Empleado, String> imple
         }
 
     }
+
+    public int contarEmpleadosActivos() {
+        return empleadoRepository.findByEliminadoFalse().size();
+    }
 }

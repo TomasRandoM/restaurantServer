@@ -24,6 +24,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation("com.mysql:mysql-connector-j:9.7.0")
     implementation("com.auth0:java-jwt:4.5.2")
+    implementation("com.itextpdf:itext-core:9.6.0")
+    implementation("com.itextpdf:kernel:9.6.0")
+    implementation("com.itextpdf:layout:9.6.0")
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'org.postgresql:postgresql'

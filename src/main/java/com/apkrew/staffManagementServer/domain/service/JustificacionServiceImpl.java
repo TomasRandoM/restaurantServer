@@ -12,6 +12,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Date;
+
 
 @Service
 public class JustificacionServiceImpl extends BaseServiceImpl<Justificacion, String> implements JustificacionService {
@@ -38,6 +40,32 @@ public class JustificacionServiceImpl extends BaseServiceImpl<Justificacion, Str
             Documentacion documentacion = documentacionService.crearDocumentacion(tipoDocumentacion, observacion, archivo);
 
             RegistroHorario registroHorario = registroHorarioService.findById(registroHorarioId);
+
+            Justificacion justificacion = new Justificacion();
+            justificacion.setDocumentacion(documentacion);
+            justificacion.setRegistroHorario(registroHorario);
+            validar(justificacion, "SAVE");
+            justificacion = justificacionRepository.save(justificacion);
+            if (justificacion1 != null) {
+                justificacion1.setEliminado(true);
+                justificacionRepository.save(justificacion1);
+            }
+            return justificacion;
+
+        } catch (ErrorServiceException ex) {
+            ex.printStackTrace();
+            throw ex;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new ErrorServiceException("Error de sistemas");
+        }
+    }
+
+    public Justificacion crearJustificacionViaUsuario(Date fecha, String employeeId, TipoJustificacion tipoDocumentacion, String observacion, MultipartFile archivo) throws ErrorServiceException {
+        try {
+            RegistroHorario registroHorario = registroHorarioService.findByFechaAndEmployeeId(fecha, employeeId);
+            Justificacion justificacion1 = justificacionRepository.getJustificacionByRegistroHorarioIdAndEliminadoFalse(registroHorario.getId());
+            Documentacion documentacion = documentacionService.crearDocumentacion(tipoDocumentacion, observacion, archivo);
 
             Justificacion justificacion = new Justificacion();
             justificacion.setDocumentacion(documentacion);

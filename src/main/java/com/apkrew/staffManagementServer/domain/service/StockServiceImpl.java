@@ -51,4 +51,8 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, String> implements 
 
         }
     }
+
+    public int countStockCritico() {
+        return stockRepository.countStockCritico();
+    }
 }
