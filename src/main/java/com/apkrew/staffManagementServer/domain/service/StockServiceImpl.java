@@ -26,6 +26,14 @@ public class StockServiceImpl extends BaseServiceImpl<Stock, String> implements 
                 throw new ErrorServiceException("No hay articulo seleccionado");
             }
 
+            if(entity.getCantidadActual() <= 0) {
+                throw new ErrorServiceException("No se permite una cantidad negativa o 0");
+            }
+
+            if(entity.getMinimo() <= 0) {
+                throw new ErrorServiceException("No se permite una cantidad mínima negativa o 0");
+            }
+
             if (caso.equals("SAVE")) {
                 if (articuloService.findById(entity.getArticulo().getId()) == null) {
                     throw new ErrorServiceException("El artículo no existe");
