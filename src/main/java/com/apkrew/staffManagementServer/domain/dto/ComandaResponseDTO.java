@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -15,11 +15,9 @@ import java.util.List;
 @Builder
 public class ComandaResponseDTO {
     private String id;
-    private Date fechaSolicitudComanda;
-    private Date fechaEntregaComanda;
+    private LocalDateTime fechaSolicitudComanda;
+    private LocalDateTime fechaEntregaComanda;
     private EstadoComanda estadoComanda;
-    private Double total;
+    private double total;
     private List<DetalleComandaResponseDTO> detalles;
-    private String facturaId;
-    private Long facturaNumero;
 }

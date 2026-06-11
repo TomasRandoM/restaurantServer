@@ -7,7 +7,6 @@ import org.springframework.data.domain.Pageable;
 import com.apkrew.staffManagementServer.domain.entity.*;
 import com.apkrew.staffManagementServer.domain.enums.EstadoComanda;
 import com.apkrew.staffManagementServer.domain.enums.EstadoDetalleComanda;
-import com.apkrew.staffManagementServer.domain.enums.EstadoFactura;
 import com.apkrew.staffManagementServer.domain.repository.BaseRepository;
 import com.apkrew.staffManagementServer.domain.repository.ComandaRepository;
 import com.apkrew.staffManagementServer.domain.repository.DetalleSeccionCartaArticuloIndividualRepository;
@@ -16,8 +15,8 @@ import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -26,28 +25,19 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
     private final ComandaRepository comandaRepository;
     private final DetalleSeccionCartaArticuloIndividualRepository articuloIndividualRepository;
     private final DetalleSeccionCartaMenuRepository detalleSeccionCartaMenuRepository;
-    private final FacturaService facturaService;
-    private final DetalleFacturaService detalleFacturaService;
-    private final FormaDePagoService formaDePagoService;
-    private final PromocionService promocionService;
+    private final ClienteServiceImpl clienteService;
 
     public ComandaServiceImpl(
             BaseRepository<Comanda, String> baseRepository,
             ComandaRepository comandaRepository,
             DetalleSeccionCartaArticuloIndividualRepository articuloIndividualRepository,
             DetalleSeccionCartaMenuRepository detalleSeccionCartaMenuRepository,
-            FacturaService facturaService,
-            DetalleFacturaService detalleFacturaService,
-            FormaDePagoService formaDePagoService,
-            PromocionService promocionService) {
+            ClienteServiceImpl clienteService) {
         super(baseRepository);
         this.comandaRepository = comandaRepository;
         this.articuloIndividualRepository = articuloIndividualRepository;
         this.detalleSeccionCartaMenuRepository = detalleSeccionCartaMenuRepository;
-        this.facturaService = facturaService;
-        this.detalleFacturaService = detalleFacturaService;
-        this.formaDePagoService = formaDePagoService;
-        this.promocionService = promocionService;
+        this.clienteService = clienteService;
     }
 
     @Override
@@ -58,7 +48,14 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
                 entity.setEstadoComanda(EstadoComanda.ABIERTA);
             }
             if (entity.getFechaSolicitudComanda() == null) {
-                entity.setFechaSolicitudComanda(new Date());
+                entity.setFechaSolicitudComanda(LocalDateTime.now()); ///Correccion de Fecha
+            }
+
+            //aca va a tirar un error? porque va a tratar de traer el cliente completo, cuando yo solo le estoy pasando un id
+            Cliente clienteComanda = clienteService.findById(entity.getCliente().getId());
+
+            if (clienteComanda != null){
+                entity.setCliente(clienteComanda);
             }
 
             if (entity.getDetalles() != null) {
@@ -68,7 +65,7 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
                             det.getDetalleSeccionCartaId();
 
                     DetalleSeccionCarta articuloInfo = obtenerDetalleSeccionCarta(cardId);
-                    double precioUnitario = obtenerPrecio(articuloInfo); //ojo aca con error de stack overflow
+                    double precioUnitario = obtenerPrecio(articuloInfo);
 
                     det.setDetalleSeccionCarta(articuloInfo);
                     det.setSubtotal(precioUnitario * det.getCantidad());
@@ -80,7 +77,7 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
             }
 
             validar(entity, "SAVE");
-            return comandaRepository.save(entity);  //aca larga el error
+            return comandaRepository.save(entity);
         } catch (ErrorServiceException ex) {
             throw ex;
         } catch (Exception e) {
@@ -93,7 +90,6 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
     @Transactional
     public Comanda update(String id, Comanda entity) throws Exception {
         try {
-            // Pre-resolve card IDs so validation works correctly
             if (entity.getDetalles() != null) {
                 for (DetalleComanda det : entity.getDetalles()) {
                     String cardId = det.getDetalleSeccionCarta() != null ? 
@@ -105,6 +101,7 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
             }
 
             validar(entity, "UPDATE");
+
             Comanda comandaAModificar = comandaRepository.findByIdAndEliminadoFalse(id)
                     .orElseThrow(() -> new ErrorServiceException("La comanda no existe"));
 
@@ -112,13 +109,23 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
                 throw new ErrorServiceException("No se puede editar una comanda cerrada o anulada");
             }
 
+            Cliente clienteModificado = clienteService.findById(entity.getCliente().getId());
+
+            if (clienteModificado == null){
+                throw new ErrorServiceException("El cliente no existe");
+            }
+
+            if (!comandaAModificar.getCliente().getId().equals(clienteModificado.getId())) {
+                comandaAModificar.setCliente(clienteModificado); //si cambia de cliente, seteo el cliente nuevo
+            }
+
+
             // modifico los datos de la comanda existente
             comandaAModificar.setFechaSolicitudComanda(entity.getFechaSolicitudComanda() != null ? entity.getFechaSolicitudComanda() : comandaAModificar.getFechaSolicitudComanda());
             comandaAModificar.setFechaEntregaComanda(entity.getFechaEntregaComanda());
-            comandaAModificar.setEstadoComanda(entity.getEstadoComanda() != null ? entity.getEstadoComanda() : comandaAModificar.getEstadoComanda());
-            comandaAModificar.setFactura(entity.getFactura());
 
-            // Clear details safely to trigger orphan removal
+            comandaAModificar.setEstadoComanda(entity.getEstadoComanda() != null ? entity.getEstadoComanda() : comandaAModificar.getEstadoComanda());
+
             comandaAModificar.getDetalles().clear();
 
             if (entity.getDetalles() != null) {
@@ -140,6 +147,7 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
                     comandaAModificar.getDetalles().add(detalle);
                 }
             }
+
 
             return comandaRepository.save(comandaAModificar); //guardo la comanda con los datos cambiados
         } catch (ErrorServiceException ex) {
@@ -178,67 +186,6 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
         }
     }
 
-    @Override
-    @Transactional
-    public Comanda facturarComanda(String comandaId, String formaPagoId, String promocionId) throws Exception {
-        Comanda comanda = findById(comandaId);
-        if (comanda.getEstadoComanda() != EstadoComanda.ABIERTA) {
-            throw new ErrorServiceException("La comanda no se encuentra abierta para ser facturada.");
-        }
-        if (comanda.getDetalles() == null || comanda.getDetalles().isEmpty()) {
-            throw new ErrorServiceException("La comanda no posee detalles para facturar.");
-        }
-
-        FormaDePago formaPago = formaDePagoService.findById(formaPagoId);
-        Promocion promocion = null;
-        if (promocionId != null && !promocionId.isBlank()) {
-            promocion = promocionService.findById(promocionId);
-        }
-
-        double totalComanda = 0.0;
-        if (comanda.getDetalles() != null) {
-            totalComanda = comanda.getDetalles().stream()
-                    .filter(d -> !d.isEliminado() && d.getSubtotal() != null)
-                    .mapToDouble(DetalleComanda::getSubtotal)
-                    .sum();
-        }
-
-        if (promocion != null) {
-            totalComanda = totalComanda * (1.0 - (promocion.getPorcentajeDescuento() / 100.0));
-        }
-
-        Factura factura = new Factura();
-        factura.setNumeroFactura(System.currentTimeMillis()); //a cambiar por el metodo de generacion correspondiente
-        factura.setFechaFactura(new Date());
-        factura.setTotalPagado(totalComanda);
-        factura.setEstado(EstadoFactura.PAGADA);
-        factura.setFormaPago(formaPago);
-        factura.setPromocion(promocion);
-
-        List<DetalleFactura> detallesFactura = new ArrayList<>();
-        for (DetalleComanda detComanda : comanda.getDetalles()) {
-            if (detComanda.isEliminado()) continue;
-            DetalleFactura detFactura = new DetalleFactura();
-            detFactura.setCantidad(detComanda.getCantidad());
-            detFactura.setSubtotal(detComanda.getSubtotal() != null ? detComanda.getSubtotal() : 0.0);
-            detFactura.setFactura(factura);
-            detallesFactura.add(detFactura);
-        }
-        factura.setDetalles(detallesFactura);
-
-        // Se guarda la factura que ahora contiene los detalles requeridos para la validación
-        factura = facturaService.save(factura);
-
-        // Se guardan los detalles individuales
-        for (DetalleFactura detFactura : detallesFactura) {
-            detalleFacturaService.save(detFactura);
-        }
-
-        comanda.setFactura(factura);
-        comanda.setEstadoComanda(EstadoComanda.PENDIENTE_DE_ENTREGA);
-
-        return comandaRepository.save(comanda);
-    }
     ///----Cambio los estados de la comanda----///
     @Override
     @Transactional
@@ -248,7 +195,7 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
             throw new ErrorServiceException("La comanda no se encuentra pendiente de entrega.");
         }
         comanda.setEstadoComanda(EstadoComanda.FINALIZADA);
-        comanda.setFechaEntregaComanda(new Date());
+        comanda.setFechaEntregaComanda(LocalDateTime.now());
         return comandaRepository.save(comanda);
     }
 
@@ -276,7 +223,7 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
     ///----Fin de cambios de estado comanda----///
 
 
-
+    //valido que cantidad de articulos  sea mayor a 0 y que sean validos
     @Override
     public boolean validar(Comanda entity, String caso) throws ErrorServiceException {
         if (entity.getDetalles() != null) {
@@ -299,7 +246,7 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
 
     private DetalleSeccionCarta obtenerDetalleSeccionCarta(String id) throws ErrorServiceException {
         DetalleSeccionCarta articuloInfo = articuloIndividualRepository.findByIdAndEliminadoFalse(id)
-                .map(x -> (DetalleSeccionCarta) x) // ojo aca, que paso?
+                .map(x -> (DetalleSeccionCarta) x)
                 .orElse(null);
 
         if (articuloInfo == null) {
@@ -327,6 +274,7 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
             throw new ErrorServiceException("Detalle de sección de carta no soportado.");
         }
     }
+
 
     @Override
     public ComandaResponseDTO obtenerComandaDTO(String id) throws Exception {
@@ -365,19 +313,21 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
 
                 String articuloNombre = "";
                 if (det.getDetalleSeccionCarta() != null) {
-                    DetalleSeccionCarta sc = det.getDetalleSeccionCarta();
-                    if (sc instanceof DetalleSeccionCartaArticuloIndividual ai && ai.getArticulo() != null) {
-                        articuloNombre = ai.getArticulo().getNombre();
-                    } else if (sc instanceof DetalleSeccionCartaMenu dscm && dscm.getMenus() != null && !dscm.getMenus().isEmpty()) {
+                    DetalleSeccionCarta detalleSeccionCarta = det.getDetalleSeccionCarta();
+
+                    if (detalleSeccionCarta instanceof DetalleSeccionCartaArticuloIndividual articuloIndividual && articuloIndividual.getArticulo() != null) {
+                        articuloNombre = articuloIndividual.getArticulo().getNombre();
+
+                    } else if (detalleSeccionCarta instanceof DetalleSeccionCartaMenu detalleSeccionCartaMenu && detalleSeccionCartaMenu.getMenus() != null && !detalleSeccionCartaMenu.getMenus().isEmpty()) {
                         List<String> nombres = new ArrayList<>();
-                        for (Menu m : dscm.getMenus()) {
+                        for (Menu m : detalleSeccionCartaMenu.getMenus()) {
                             nombres.add(m.getNombre());
                         }
                         articuloNombre = String.join(", ", nombres);
                     }
                 }
 
-                double sub = det.getSubtotal() != null ? det.getSubtotal() : 0.0;
+                double sub = det.getSubtotal();
                 totalComanda += sub;
 
                 DetalleComandaResponseDTO detDTO = DetalleComandaResponseDTO.builder()
@@ -399,8 +349,6 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
                 .estadoComanda(comanda.getEstadoComanda())
                 .total(totalComanda)
                 .detalles(detallesDTO)
-                .facturaId(comanda.getFactura() != null ? comanda.getFactura().getId() : null)
-                .facturaNumero(comanda.getFactura() != null ? comanda.getFactura().getNumeroFactura() : null)
                 .build();
     }
 }
