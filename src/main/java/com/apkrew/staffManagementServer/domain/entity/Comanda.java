@@ -44,5 +44,6 @@ public class Comanda extends Base {
     @NotAudited
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "factura_id")
+    @JsonIgnoreProperties("detalles")
     private Factura factura;
 }

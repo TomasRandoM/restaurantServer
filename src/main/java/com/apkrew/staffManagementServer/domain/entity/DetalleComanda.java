@@ -1,6 +1,7 @@
 package com.apkrew.staffManagementServer.domain.entity;
 
 import com.apkrew.staffManagementServer.domain.enums.EstadoDetalleComanda;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
@@ -29,5 +30,6 @@ public class DetalleComanda extends Base {
 
     @ManyToOne
     @JoinColumn(name = "detalle_seccion_carta_id")
+    @JsonIgnoreProperties("seccionCarta")
     private DetalleSeccionCarta detalleSeccionCarta;
 }

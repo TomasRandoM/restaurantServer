@@ -1,5 +1,6 @@
 package com.apkrew.staffManagementServer.controller;
 
+import com.apkrew.staffManagementServer.domain.entity.DetalleComanda;
 import com.apkrew.staffManagementServer.domain.enums.EstadoDetalleComanda;
 import com.apkrew.staffManagementServer.domain.service.DetalleComandaServiceImpl;
 import org.springframework.http.HttpStatus;
@@ -9,12 +10,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping(path = "api/v1/detalle-comanda")
-public class DetalleComandaController {
-
-    private final DetalleComandaServiceImpl service;
+public class DetalleComandaController
+        extends BaseControllerImpl<DetalleComanda, DetalleComandaServiceImpl> {
 
     public DetalleComandaController(DetalleComandaServiceImpl service) {
-        this.service = service;
+        super(service);
     }
 
     @PutMapping("/{id}/estado")
