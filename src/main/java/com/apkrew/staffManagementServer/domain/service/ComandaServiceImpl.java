@@ -213,29 +213,6 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
     ///----Cambio los estados de la comanda----///
     @Override
     @Transactional
-    public Comanda entregarComanda(String comandaId) throws Exception {
-        Comanda comanda = findById(comandaId);
-        if (comanda.getEstadoComanda() != EstadoComanda.PENDIENTE_DE_ENTREGA) {
-            throw new ErrorServiceException("La comanda no se encuentra pendiente de entrega.");
-        }
-        comanda.setEstadoComanda(EstadoComanda.FINALIZADA);
-        comanda.setFechaEntregaComanda(LocalDateTime.now());
-        return comandaRepository.save(comanda);
-    }
-
-    @Override
-    @Transactional
-    public Comanda marcarEntregaFallida(String comandaId) throws Exception {
-        Comanda comanda = findById(comandaId);
-        if (comanda.getEstadoComanda() != EstadoComanda.PENDIENTE_DE_ENTREGA) {
-            throw new ErrorServiceException("La comanda no se encuentra pendiente de entrega.");
-        }
-        comanda.setEstadoComanda(EstadoComanda.ENTREGA_FALLIDA);
-        return comandaRepository.save(comanda);
-    }
-
-    @Override
-    @Transactional
     public Comanda anularComanda(String comandaId) throws Exception {
         try {
             Comanda comanda = comandaRepository.findByIdAndEliminadoFalse(comandaId)
