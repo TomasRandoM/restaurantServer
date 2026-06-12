@@ -7,6 +7,7 @@ import com.apkrew.staffManagementServer.domain.repository.BaseRepository;
 import com.apkrew.staffManagementServer.domain.repository.DocumentacionRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,7 +24,8 @@ public class DocumentacionServiceImpl extends BaseServiceImpl<Documentacion, Str
     @Autowired
     private DocumentacionRepository documentacionRepository;
 
-    String ruta = "files/documentacion/";
+    @Value("${app.storage.documentacion:files/documentacion/}")
+    private String ruta;
 
     public DocumentacionServiceImpl(BaseRepository<Documentacion, String> repository) {
         super(repository);
@@ -71,7 +73,7 @@ public class DocumentacionServiceImpl extends BaseServiceImpl<Documentacion, Str
             String nombreOriginal = archivo.getOriginalFilename();
             documentacion.setNombreArchivo(nombreOriginal);
             String nuevoNombre = UUID.randomUUID().toString() + nombreOriginal.substring(nombreOriginal.lastIndexOf("."));
-            Path destino = Paths.get(ruta + nuevoNombre);
+            Path destino = Paths.get(ruta, nuevoNombre);
             documentacion.setNombreArchivo(nombreOriginal);
             documentacion.setTipoDocumentacion(tipoDocumentacion);
             documentacion.setObservacion(observacion);
@@ -103,7 +105,7 @@ public class DocumentacionServiceImpl extends BaseServiceImpl<Documentacion, Str
             String nombreOriginal = archivo.getOriginalFilename();
             documentacion.setNombreArchivo(nombreOriginal);
             String nuevoNombre = UUID.randomUUID().toString() + nombreOriginal.substring(nombreOriginal.lastIndexOf("."));
-            Path destino = Paths.get(ruta + nuevoNombre);
+            Path destino = Paths.get(ruta, nuevoNombre);
             documentacion.setNombreArchivo(nombreOriginal);
             documentacion.setPathArchivo(destino.toString());
             validar(documentacion, "UPDATE");
