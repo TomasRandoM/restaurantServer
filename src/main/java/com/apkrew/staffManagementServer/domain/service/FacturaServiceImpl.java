@@ -9,10 +9,13 @@ import com.apkrew.staffManagementServer.domain.repository.FacturaRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -105,6 +108,7 @@ public class FacturaServiceImpl
     public List<FacturaResponseDTO> findAllDTO() throws Exception {
         try {
             List<Factura> entities = repository.findByEliminadoFalse();
+            entities.sort(Comparator.comparing(Factura::getNumeroFactura));
             List<FacturaResponseDTO> dtos = new ArrayList<>();
             for (Factura entity : entities) {
                 dtos.add(convertToResponseDTO(entity));
@@ -119,7 +123,11 @@ public class FacturaServiceImpl
     @Transactional
     public Page<FacturaResponseDTO> findAllDTO(Pageable pageable) throws Exception {
         try {
-            Page<Factura> entities = repository.findByEliminadoFalse(pageable);
+            Pageable sorted = PageRequest.of(
+                    pageable.getPageNumber(),
+                    pageable.getPageSize(),
+                    Sort.by(Sort.Direction.ASC, "numeroFactura"));
+            Page<Factura> entities = repository.findByEliminadoFalse(sorted);
             return entities.map(this::convertToResponseDTO);
         } catch (Exception e) {
             throw new ErrorServiceException("Error al obtener las facturas");

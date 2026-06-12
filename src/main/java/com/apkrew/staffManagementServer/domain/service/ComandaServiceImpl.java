@@ -3,7 +3,9 @@ package com.apkrew.staffManagementServer.domain.service;
 import com.apkrew.staffManagementServer.domain.dto.ComandaResponseDTO;
 import com.apkrew.staffManagementServer.domain.dto.DetalleComandaResponseDTO;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import com.apkrew.staffManagementServer.domain.entity.*;
 import com.apkrew.staffManagementServer.domain.enums.EstadoComanda;
 import com.apkrew.staffManagementServer.domain.enums.EstadoDetalleComanda;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -427,19 +430,32 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
     @Override
     @Transactional(readOnly = true)
     public Page<ComandaResponseDTO> obtenerComandasDTO(Pageable pageable) throws Exception {
-        Page<Comanda> comandas = findAll(pageable);
-        return comandas.map(this::convertToResponseDTO);
+        try {
+            Pageable sorted = PageRequest.of(
+                    pageable.getPageNumber(),
+                    pageable.getPageSize(),
+                    Sort.by(Sort.Direction.DESC, "fechaSolicitudComanda"));
+            Page<Comanda> comandas = findAll(sorted);
+            return comandas.map(this::convertToResponseDTO);
+        } catch (Exception e) {
+            throw new ErrorServiceException("Error al obtener las comandas");
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ComandaResponseDTO> obtenerComandasDTO() throws Exception {
-        List<Comanda> comandas = findAll();
-        List<ComandaResponseDTO> dtos = new ArrayList<>();
-        for (Comanda c : comandas) {
-            dtos.add(convertToResponseDTO(c));
+        try {
+            List<Comanda> comandas = findAll();
+            comandas.sort(Comparator.comparing(Comanda::getFechaSolicitudComanda).reversed());
+            List<ComandaResponseDTO> dtos = new ArrayList<>();
+            for (Comanda c : comandas) {
+                dtos.add(convertToResponseDTO(c));
+            }
+            return dtos;
+        } catch (Exception e) {
+            throw new ErrorServiceException("Error al obtener las comandas");
         }
-        return dtos;
     }
 
     @Override
