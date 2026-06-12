@@ -3,20 +3,28 @@ package com.apkrew.staffManagementServer.domain.service;
 import com.apkrew.staffManagementServer.domain.dto.ComandaResponseDTO;
 import com.apkrew.staffManagementServer.domain.dto.DetalleComandaResponseDTO;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import com.apkrew.staffManagementServer.domain.entity.*;
 import com.apkrew.staffManagementServer.domain.enums.EstadoComanda;
 import com.apkrew.staffManagementServer.domain.enums.EstadoDetalleComanda;
+import com.apkrew.staffManagementServer.domain.enums.EstadoFactura;
 import com.apkrew.staffManagementServer.domain.repository.BaseRepository;
 import com.apkrew.staffManagementServer.domain.repository.ComandaRepository;
 import com.apkrew.staffManagementServer.domain.repository.DetalleSeccionCartaArticuloIndividualRepository;
 import com.apkrew.staffManagementServer.domain.repository.DetalleSeccionCartaMenuRepository;
+import com.apkrew.staffManagementServer.domain.repository.FacturaRepository;
+import com.apkrew.staffManagementServer.domain.repository.FormaDePagoRepository;
+import com.apkrew.staffManagementServer.domain.repository.PromocionRepository;
 import com.apkrew.staffManagementServer.exceptions.ErrorServiceException;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -26,18 +34,27 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
     private final DetalleSeccionCartaArticuloIndividualRepository articuloIndividualRepository;
     private final DetalleSeccionCartaMenuRepository detalleSeccionCartaMenuRepository;
     private final ClienteServiceImpl clienteService;
+    private final FacturaRepository facturaRepository;
+    private final FormaDePagoRepository formaDePagoRepository;
+    private final PromocionRepository promocionRepository;
 
     public ComandaServiceImpl(
             BaseRepository<Comanda, String> baseRepository,
             ComandaRepository comandaRepository,
             DetalleSeccionCartaArticuloIndividualRepository articuloIndividualRepository,
             DetalleSeccionCartaMenuRepository detalleSeccionCartaMenuRepository,
-            ClienteServiceImpl clienteService) {
+            ClienteServiceImpl clienteService,
+            FacturaRepository facturaRepository,
+            FormaDePagoRepository formaDePagoRepository,
+            PromocionRepository promocionRepository) {
         super(baseRepository);
         this.comandaRepository = comandaRepository;
         this.articuloIndividualRepository = articuloIndividualRepository;
         this.detalleSeccionCartaMenuRepository = detalleSeccionCartaMenuRepository;
         this.clienteService = clienteService;
+        this.facturaRepository = facturaRepository;
+        this.formaDePagoRepository = formaDePagoRepository;
+        this.promocionRepository = promocionRepository;
     }
 
     @Override
@@ -65,6 +82,7 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
                             det.getDetalleSeccionCartaId();
 
                     DetalleSeccionCarta articuloInfo = obtenerDetalleSeccionCarta(cardId);
+                    validarPerteneceACartaActiva(articuloInfo);
                     double precioUnitario = obtenerPrecio(articuloInfo);
 
                     det.setDetalleSeccionCarta(articuloInfo);
@@ -96,6 +114,7 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
                             det.getDetalleSeccionCarta().getId() : 
                             det.getDetalleSeccionCartaId();
                     DetalleSeccionCarta articuloInfo = obtenerDetalleSeccionCarta(cardId);
+                    validarPerteneceACartaActiva(articuloInfo);
                     det.setDetalleSeccionCarta(articuloInfo);
                 }
             }
@@ -105,8 +124,9 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
             Comanda comandaAModificar = comandaRepository.findByIdAndEliminadoFalse(id)
                     .orElseThrow(() -> new ErrorServiceException("La comanda no existe"));
 
-            if (comandaAModificar.getEstadoComanda() != EstadoComanda.ABIERTA) {
-                throw new ErrorServiceException("No se puede editar una comanda cerrada o anulada");
+            if (comandaAModificar.getEstadoComanda() == EstadoComanda.FINALIZADA
+                    || comandaAModificar.getEstadoComanda() == EstadoComanda.ANULADA) {
+                throw new ErrorServiceException("No se puede editar una comanda finalizada o anulada");
             }
 
             Cliente clienteModificado = clienteService.findById(entity.getCliente().getId());
@@ -134,6 +154,7 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
                             det.getDetalleSeccionCarta().getId() : 
                             det.getDetalleSeccionCartaId();
                     DetalleSeccionCarta articuloInfo = obtenerDetalleSeccionCarta(cardId);
+                    validarPerteneceACartaActiva(articuloInfo);
                     double precioUnitario = obtenerPrecio(articuloInfo);
 
                     DetalleComanda detalle = DetalleComanda.builder()
@@ -168,8 +189,14 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
                 throw new ErrorServiceException("la comanda no existe");
             }
 
-            if (comandaElim.getEstadoComanda() != EstadoComanda.ANULADA){
-                throw new ErrorServiceException("la comanda debe encontrarse anulada para poder eliminarse");
+            if (comandaElim.getEstadoComanda() != EstadoComanda.ANULADA) {
+                if (comandaElim.getEstadoComanda() == EstadoComanda.ABIERTA
+                        || comandaElim.getEstadoComanda() == EstadoComanda.PENDIENTE_DE_ENTREGA
+                        || comandaElim.getEstadoComanda() == EstadoComanda.ENTREGA_FALLIDA) {
+                    comandaElim.setEstadoComanda(EstadoComanda.ANULADA);
+                } else {
+                    throw new ErrorServiceException("No se puede anular una comanda en estado " + comandaElim.getEstadoComanda());
+                }
             }
 
             List<DetalleComanda> detallesElim = comandaElim.getDetalles();
@@ -189,36 +216,150 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
     ///----Cambio los estados de la comanda----///
     @Override
     @Transactional
-    public Comanda entregarComanda(String comandaId) throws Exception {
-        Comanda comanda = findById(comandaId);
-        if (comanda.getEstadoComanda() != EstadoComanda.PENDIENTE_DE_ENTREGA) {
-            throw new ErrorServiceException("La comanda no se encuentra pendiente de entrega.");
-        }
-        comanda.setEstadoComanda(EstadoComanda.FINALIZADA);
-        comanda.setFechaEntregaComanda(LocalDateTime.now());
-        return comandaRepository.save(comanda);
-    }
-
-    @Override
-    @Transactional
-    public Comanda marcarEntregaFallida(String comandaId) throws Exception {
-        Comanda comanda = findById(comandaId);
-        if (comanda.getEstadoComanda() != EstadoComanda.PENDIENTE_DE_ENTREGA) {
-            throw new ErrorServiceException("La comanda no se encuentra pendiente de entrega.");
-        }
-        comanda.setEstadoComanda(EstadoComanda.ENTREGA_FALLIDA);
-        return comandaRepository.save(comanda);
-    }
-
-    @Override
-    @Transactional
     public Comanda anularComanda(String comandaId) throws Exception {
-        Comanda comanda = findById(comandaId);
-        if (comanda.getEstadoComanda() != EstadoComanda.ABIERTA && comanda.getEstadoComanda() != EstadoComanda.PENDIENTE_DE_ENTREGA) {
-            throw new ErrorServiceException("La comanda no se encuentra en un estado que permita anulación.");
+        try {
+            Comanda comanda = comandaRepository.findByIdAndEliminadoFalse(comandaId)
+                    .orElseThrow(() -> new ErrorServiceException("La comanda no existe"));
+
+            if (comanda.getEstadoComanda() != EstadoComanda.ABIERTA
+                    && comanda.getEstadoComanda() != EstadoComanda.PENDIENTE_DE_ENTREGA
+                    && comanda.getEstadoComanda() != EstadoComanda.ENTREGA_FALLIDA) {
+                throw new ErrorServiceException("La comanda no se encuentra en un estado que permita anulación.");
+            }
+
+            if (comanda.getFacturaNumero() == null) {
+                List<DetalleComanda> detallesActivos = new ArrayList<>();
+                double total = 0;
+                if (comanda.getDetalles() != null) {
+                    for (DetalleComanda dc : comanda.getDetalles()) {
+                        if (!dc.isEliminado()) {
+                            detallesActivos.add(dc);
+                            total += dc.getSubtotal();
+                        }
+                    }
+                }
+
+                Long maxNumero = facturaRepository.findMaxNumeroFactura();
+                Long nextNumero = maxNumero + 1;
+
+                Factura factura = Factura.builder()
+                        .numeroFactura(nextNumero)
+                        .fechaFactura(new Date())
+                        .totalPagado(0)
+                        .estado(EstadoFactura.ANULADA)
+                        .build();
+
+                if (!detallesActivos.isEmpty()) {
+                    DetalleFactura detalleFactura = DetalleFactura.builder()
+                            .cantidad(detallesActivos.size())
+                            .subtotal(total)
+                            .factura(factura)
+                            .detallesComanda(detallesActivos)
+                            .build();
+
+                    for (DetalleComanda dc : detallesActivos) {
+                        dc.setDetalleFactura(detalleFactura);
+                    }
+
+                    factura.setDetalles(List.of(detalleFactura));
+                }
+
+                comanda.setFacturaNumero(nextNumero);
+                facturaRepository.save(factura);
+            }
+
+            comanda.setEstadoComanda(EstadoComanda.ANULADA);
+            return comandaRepository.save(comanda);
+
+        } catch (ErrorServiceException ex) {
+            throw ex;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ErrorServiceException("Error al anular la comanda");
         }
-        comanda.setEstadoComanda(EstadoComanda.ANULADA);
-        return comandaRepository.save(comanda);
+    }
+
+    @Override
+    @Transactional
+    public ComandaResponseDTO facturarComanda(String comandaId, String formaPagoId, String promocionId) throws Exception {
+        try {
+            Comanda comanda = comandaRepository.findByIdAndEliminadoFalse(comandaId)
+                    .orElseThrow(() -> new ErrorServiceException("La comanda no existe"));
+
+            if (comanda.getEstadoComanda() != EstadoComanda.ABIERTA) {
+                throw new ErrorServiceException("Solo se pueden facturar comandas en estado ABIERTA");
+            }
+
+            FormaDePago formaPago = formaDePagoRepository.findByIdAndEliminadoFalse(formaPagoId)
+                    .orElseThrow(() -> new ErrorServiceException("La forma de pago indicada no existe"));
+
+            Promocion promocion = null;
+            if (promocionId != null && !promocionId.isBlank()) {
+                promocion = promocionRepository.findByIdAndEliminadoFalse(promocionId)
+                        .orElseThrow(() -> new ErrorServiceException("La promocion indicada no existe"));
+            }
+
+            List<DetalleComanda> detallesActivos = new ArrayList<>();
+            double totalSinDescuento = 0;
+            if (comanda.getDetalles() != null) {
+                for (DetalleComanda dc : comanda.getDetalles()) {
+                    if (!dc.isEliminado()) {
+                        detallesActivos.add(dc);
+                        totalSinDescuento += dc.getSubtotal();
+                    }
+                }
+            }
+
+            if (detallesActivos.isEmpty()) {
+                throw new ErrorServiceException("La comanda no tiene detalles activos para facturar");
+            }
+
+            Long maxNumero = facturaRepository.findMaxNumeroFactura();
+            Long nextNumero = maxNumero + 1;
+
+            double totalPagado = totalSinDescuento;
+            if (promocion != null) {
+                double descuento = totalSinDescuento * (promocion.getPorcentajeDescuento() / 100.0);
+                totalPagado -= descuento;
+            }
+
+            Factura factura = Factura.builder()
+                    .numeroFactura(nextNumero)
+                    .fechaFactura(new Date())
+                    .totalPagado(totalPagado)
+                    .estado(EstadoFactura.PAGADA)
+                    .formaPago(formaPago)
+                    .promocion(promocion)
+                    .build();
+
+            DetalleFactura detalleFactura = DetalleFactura.builder()
+                    .cantidad(detallesActivos.size())
+                    .subtotal(totalSinDescuento)
+                    .factura(factura)
+                    .detallesComanda(detallesActivos)
+                    .build();
+
+            for (DetalleComanda dc : detallesActivos) {
+                dc.setDetalleFactura(detalleFactura);
+            }
+
+            factura.setDetalles(List.of(detalleFactura));
+
+            comanda.setEstadoComanda(EstadoComanda.FINALIZADA);
+            comanda.setFechaEntregaComanda(LocalDateTime.now());
+            comanda.setFacturaNumero(nextNumero);
+
+            facturaRepository.save(factura);
+            comandaRepository.save(comanda);
+
+            return convertToResponseDTO(comanda);
+
+        } catch (ErrorServiceException ex) {
+            throw ex;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ErrorServiceException("Error al facturar la comanda");
+        }
     }
     ///----Fin de cambios de estado comanda----///
 
@@ -277,6 +418,7 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
 
 
     @Override
+    @Transactional(readOnly = true)
     public ComandaResponseDTO obtenerComandaDTO(String id) throws Exception {
         Comanda comanda = findById(id);
         if (comanda == null) {
@@ -286,19 +428,34 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ComandaResponseDTO> obtenerComandasDTO(Pageable pageable) throws Exception {
-        Page<Comanda> comandas = findAll(pageable);
-        return comandas.map(this::convertToResponseDTO);
+        try {
+            Pageable sorted = PageRequest.of(
+                    pageable.getPageNumber(),
+                    pageable.getPageSize(),
+                    Sort.by(Sort.Direction.DESC, "fechaSolicitudComanda"));
+            Page<Comanda> comandas = findAll(sorted);
+            return comandas.map(this::convertToResponseDTO);
+        } catch (Exception e) {
+            throw new ErrorServiceException("Error al obtener las comandas");
+        }
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ComandaResponseDTO> obtenerComandasDTO() throws Exception {
-        List<Comanda> comandas = findAll();
-        List<ComandaResponseDTO> dtos = new ArrayList<>();
-        for (Comanda c : comandas) {
-            dtos.add(convertToResponseDTO(c));
+        try {
+            List<Comanda> comandas = findAll();
+            comandas.sort(Comparator.comparing(Comanda::getFechaSolicitudComanda).reversed());
+            List<ComandaResponseDTO> dtos = new ArrayList<>();
+            for (Comanda c : comandas) {
+                dtos.add(convertToResponseDTO(c));
+            }
+            return dtos;
+        } catch (Exception e) {
+            throw new ErrorServiceException("Error al obtener las comandas");
         }
-        return dtos;
     }
 
     @Override
@@ -342,13 +499,29 @@ public class ComandaServiceImpl extends BaseServiceImpl<Comanda, String> impleme
             }
         }
 
-        return ComandaResponseDTO.builder()
+        ComandaResponseDTO.ComandaResponseDTOBuilder builder = ComandaResponseDTO.builder()
                 .id(comanda.getId())
                 .fechaSolicitudComanda(comanda.getFechaSolicitudComanda())
                 .fechaEntregaComanda(comanda.getFechaEntregaComanda())
                 .estadoComanda(comanda.getEstadoComanda())
+                .facturaNumero(comanda.getFacturaNumero())
                 .total(totalComanda)
-                .detalles(detallesDTO)
-                .build();
+                .detalles(detallesDTO);
+
+        if (comanda.getCliente() != null) {
+            builder.clienteId(comanda.getCliente().getId());
+            builder.clienteNombre(comanda.getCliente().getNombre() + " " + comanda.getCliente().getApellido());
+        }
+
+        return builder.build();
+    }
+
+    private void validarPerteneceACartaActiva(DetalleSeccionCarta detalle) throws ErrorServiceException {
+        if (detalle == null) return;
+        if (detalle.getSeccionCarta() == null) return;
+        if (detalle.getSeccionCarta().getCarta() == null) return;
+        if (!detalle.getSeccionCarta().getCarta().isActivo()) {
+            throw new ErrorServiceException("El ítem seleccionado no pertenece a la carta activa");
+        }
     }
 }

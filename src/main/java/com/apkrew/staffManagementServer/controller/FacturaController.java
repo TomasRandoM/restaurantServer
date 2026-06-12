@@ -1,18 +1,46 @@
 package com.apkrew.staffManagementServer.controller;
 
-import com.apkrew.staffManagementServer.domain.entity.Factura;
 import com.apkrew.staffManagementServer.domain.service.FacturaServiceImpl;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping(path = "api/v1/factura")
-public class FacturaController
-        extends BaseControllerImpl<Factura, FacturaServiceImpl> {
+public class FacturaController {
+
+    private final FacturaServiceImpl service;
 
     public FacturaController(FacturaServiceImpl service) {
-        super(service);
+        this.service = service;
+    }
+
+    @GetMapping("")
+    public ResponseEntity<?> getAll() {
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(service.findAllDTO());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"error\":\"" + e.getMessage() + "\"}");
+        }
+    }
+
+    @GetMapping("/paged")
+    public ResponseEntity<?> getAll(Pageable pageable) {
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(service.findAllDTO(pageable));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"error\":\"" + e.getMessage() + "\"}");
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getOne(@PathVariable String id) {
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(service.findByIdDTO(id));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"error\":\"" + e.getMessage() + "\"}");
+        }
     }
 }

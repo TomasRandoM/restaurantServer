@@ -21,20 +21,5 @@ public interface CartaRepository extends BaseRepository<Carta, String> {
       AND c.activo = true
     """)
     List<Carta> findAllActivas();
-
-    List<Carta> findByFechaDesdeLessThanEqualAndFechaHastaGreaterThanEqualAndEliminadoFalse(
-            LocalDate fechaDesde,
-            LocalDate fechaHasta
-    );
-
-    @Query("""
-    SELECT c
-    FROM Carta c
-    WHERE c.eliminado = false
-      AND c.fechaDesde <= :fechaHasta
-      AND c.fechaHasta >= :fechaDesde
-    """)
-    List<Carta> buscarCartasSolapadas(
-            @Param("fechaDesde") LocalDate fechaDesde,
-            @Param("fechaHasta") LocalDate fechaHasta);
+    
 }

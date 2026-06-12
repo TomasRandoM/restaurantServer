@@ -14,4 +14,6 @@ public class MenuCartaDTO {
     private double precio;
 
     private String imagenId;
+
+    private String detalleSeccionCartaId;
 }

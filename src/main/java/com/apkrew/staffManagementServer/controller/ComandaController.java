@@ -79,31 +79,26 @@ public class ComandaController extends BaseControllerImpl<Comanda, ComandaServic
         }
     }
 
-    ///estos 3 especificamente son para modificar el estado de la comanda
-    @PutMapping("/{id}/entregar")
-    public ResponseEntity<?> entregarComanda(@PathVariable String id) {
-        try {
-            return ResponseEntity.status(HttpStatus.OK).body(service.convertToResponseDTO(service.entregarComanda(id)));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"error\":\"" + e.getMessage() + "\"}");
-        }
-    }
-
-    @PutMapping("/{id}/entrega-fallida")
-    public ResponseEntity<?> marcarEntregaFallida(@PathVariable String id) {
-        try {
-            return ResponseEntity.status(HttpStatus.OK).body(service.convertToResponseDTO(service.marcarEntregaFallida(id)));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"error\":\"" + e.getMessage() + "\"}");
-        }
-    }
-
     @PutMapping("/{id}/anular")
     public ResponseEntity<?> anularComanda(@PathVariable String id) {
         try {
             return ResponseEntity.status(HttpStatus.OK).body(service.convertToResponseDTO(service.anularComanda(id)));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"error\":\"" + e.getMessage() + "\"}");
+        }
+    }
+
+    @PostMapping("/{id}/facturar")
+    public ResponseEntity<?> facturarComanda(
+            @PathVariable String id,
+            @RequestParam String formaPagoId,
+            @RequestParam(required = false) String promocionId) {
+        try {
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(service.facturarComanda(id, formaPagoId, promocionId));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("{\"error\":\"" + e.getMessage() + "\"}");
         }
     }
 }

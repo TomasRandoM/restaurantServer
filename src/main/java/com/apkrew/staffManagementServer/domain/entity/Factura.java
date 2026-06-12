@@ -1,6 +1,7 @@
 package com.apkrew.staffManagementServer.domain.entity;
 
 import com.apkrew.staffManagementServer.domain.enums.EstadoFactura;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,7 +25,8 @@ public class Factura extends Base {
     @Enumerated(EnumType.STRING)
     private EstadoFactura estado;
 
-    @OneToMany(mappedBy = "factura")
+    @OneToMany(mappedBy = "factura", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("factura")
     private List<DetalleFactura> detalles;
 
     @ManyToOne
