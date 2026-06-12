@@ -31,6 +31,14 @@ public class DetalleComanda extends Base {
     private Comanda comanda;
 
     @ManyToOne
+    @JoinColumn(name = "detalle_factura_id")
+    @org.hibernate.envers.NotAudited
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private DetalleFactura detalleFactura;
+
+    @ManyToOne
     @JoinColumn(name = "detalle_seccion_carta_id")
     @JsonIgnoreProperties("seccionCarta")
     private DetalleSeccionCarta detalleSeccionCarta;

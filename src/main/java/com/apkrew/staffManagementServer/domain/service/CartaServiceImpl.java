@@ -69,6 +69,12 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
                         "La fecha de fin no puede ser menor a la fecha de inicio");
             }
 
+            if (entity.getSecciones() == null
+                    || entity.getSecciones().isEmpty()) {
+                throw new ErrorServiceException(
+                        "La carta debe tener al menos una sección");
+            }
+
             return true;
 
         } catch (ErrorServiceException ex) {
@@ -142,8 +148,6 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
 
         cargarDatosCarta(carta, dto);
 
-        validar(carta, "UPDATE");
-
         if (carta.isActivo()) {
             desactivarTodasLasActivasExcluyendo(id);
         }
@@ -153,6 +157,8 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
 
         carta.getSecciones().clear();
         carta.getSecciones().addAll(nuevasSecciones);
+
+        validar(carta, "UPDATE");
 
         return cartaRepository.save(carta);
     }
@@ -274,6 +280,9 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
                     producto.setPrecio(
                             ai.getPrecio());
 
+                    producto.setDetalleSeccionCartaId(
+                            ai.getId());
+
                     if (ai.getArticulo().getImagen() != null) {
                         producto.setImagenId(
                                 ai.getArticulo().getImagen().getId());
@@ -294,6 +303,9 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
                         menuDTO.setNombre(menu.getNombre());
                         menuDTO.setDescripcion(menu.getDescripcion());
                         menuDTO.setPrecio(menu.getPrecio());
+
+                        menuDTO.setDetalleSeccionCartaId(
+                                dscm.getId());
 
                         if (menu.getImagen() != null) {
                             menuDTO.setImagenId(
@@ -388,6 +400,13 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
                                         + articuloDTO.getId() + ")");
                     }
 
+                    if (articuloDTO.getPrecio() <= 0) {
+                        throw new ErrorServiceException(
+                                "El precio del artículo debe ser mayor a 0 "
+                                        + "(categoría " + (i + 1)
+                                        + ", fila " + (j + 1) + ")");
+                    }
+
                     DetalleSeccionCartaArticuloIndividual detalle =
                             new DetalleSeccionCartaArticuloIndividual();
 
@@ -431,6 +450,12 @@ public class CartaServiceImpl extends BaseServiceImpl<Carta, String>
 
                     detalles.add(detalle);
                 }
+            }
+
+            if (detalles.isEmpty()) {
+                throw new ErrorServiceException(
+                        "La categoría '" + categoria.getNombre()
+                                + "' debe tener al menos un artículo o menú");
             }
 
             seccion.setDetalles(detalles);

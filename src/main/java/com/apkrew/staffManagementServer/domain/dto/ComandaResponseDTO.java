@@ -18,6 +18,9 @@ public class ComandaResponseDTO {
     private LocalDateTime fechaSolicitudComanda;
     private LocalDateTime fechaEntregaComanda;
     private EstadoComanda estadoComanda;
+    private Long facturaNumero;
+    private String clienteId;
+    private String clienteNombre;
     private double total;
     private List<DetalleComandaResponseDTO> detalles;
 }

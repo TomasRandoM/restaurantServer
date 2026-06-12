@@ -106,4 +106,18 @@ public class ComandaController extends BaseControllerImpl<Comanda, ComandaServic
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"error\":\"" + e.getMessage() + "\"}");
         }
     }
+
+    @PostMapping("/{id}/facturar")
+    public ResponseEntity<?> facturarComanda(
+            @PathVariable String id,
+            @RequestParam String formaPagoId,
+            @RequestParam(required = false) String promocionId) {
+        try {
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(service.facturarComanda(id, formaPagoId, promocionId));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("{\"error\":\"" + e.getMessage() + "\"}");
+        }
+    }
 }

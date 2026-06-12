@@ -29,12 +29,14 @@ public class Comanda extends Base {
     @Enumerated(EnumType.STRING)
     private EstadoComanda estadoComanda;
 
+    private Long facturaNumero;
+
     @ManyToOne
     @JoinColumn(name = "cliente_id")
     private Cliente cliente;
 
     @Builder.Default
-    @OneToMany(mappedBy = "comanda")
+    @OneToMany(mappedBy = "comanda", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonIgnoreProperties("comanda")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

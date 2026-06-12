@@ -14,4 +14,6 @@ public class ArticuloCartaDTO {
     private double precio;
 
     private String imagenId;
+
+    private String detalleSeccionCartaId;
 }
